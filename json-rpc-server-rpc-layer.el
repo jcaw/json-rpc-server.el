@@ -121,13 +121,6 @@ be handled."
             (json-encode "Command queued for execution."))))))
 
 
-(defun jrpc-dispatcher-handler (httpcon)
-  "Dispatch request to the correct handler based on its URL.
-
-`HTTPCON' is the request to dispatch."
-  (elnode-dispatcher httpcon jrpc-urls))
-
-
 (defun jrpc-alist-get (key alist)
   "List alist-get, but works with string keys."
   (let ((pair (assoc key alist)))
@@ -309,7 +302,7 @@ If instance is nil, nil will be returned."
   "Expose a function to \"/eval-function\".
 
 "
-  ;; TODO: We write documentation for json rpc server
+  ;; TODO: Rewrite documentation for json rpc server
   (add-to-list 'jrpc-exposed-functions func))
 
 
@@ -320,21 +313,5 @@ This reverses `jrpc-expose-function'."
   (setq jrpc-exposed-functions (remove func jrpc-exposed-functions)))
 
 
-(defun jrpc-start-demo-server ()
-  "Start a simple server that serves all commands.
-
-This is intended to be used to test the API only.
-
-This is just a prototype at the moment. For now, it always runs
-on port 8002. This will be changed when a full server management
-suite is implemented."
-  (elnode-start 'jrpc-handler-eval-function :port 8002 :host "localhost"))
-
-
-(defun jrpc-stop-demo-server ()
-  "Stop the demonstration server."
-  (elnode-stop 8002))
-
-
-(provide 'json-rpc-server)
-;;; json-rpc-server.el ends here
+(provide 'json-rpc-server-rpc-layer)
+;;; json-rpc-server-rpc-layer.el ends here
