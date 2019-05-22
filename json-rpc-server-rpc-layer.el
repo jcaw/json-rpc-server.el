@@ -58,7 +58,7 @@ This represents a request as laid out in the JSON-RPC 2.0
 specification.
 
 https://www.jsonrpc.org/specification"
-  json-version
+  jsonrpc
   method
   (params '())
   id)
@@ -101,7 +101,7 @@ No other constructors exist. One of those two must be used.
 
 Also note that this response will *always* be tagged as JSON-RPC
 2.0, even if the client sent a JSON-RPC 1.0 request."
-  (json-version "2.0")
+  (jsonrpc "2.0")
   (result nil)
   (error nil)
   id)
@@ -109,7 +109,7 @@ Also note that this response will *always* be tagged as JSON-RPC
 
 (defun jrpc-response-to-alist (instance)
   "Convert a jrpc response object into an alist so it can be encoded into JSON."
-  (list (cons "json-version" (jrpc-response-json-version instance))
+  (list (cons "jsonrpc" (jrpc-response-jsonrpc instance))
         (cons "result" (jrpc-response-result instance))
         (cons "error" (jrpc-error-to-alist (jrpc-response-error instance)))
         (cons "id" (jrpc-response-id instance))))
