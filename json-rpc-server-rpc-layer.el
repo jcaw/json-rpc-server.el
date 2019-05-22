@@ -50,6 +50,69 @@ list is equivalent to nil, so the empty list counts as nil."
          (cdr pair))))
 
 
+(defun jrpc-handle (json)
+  "Handle a JSON-RPC request.
+
+The request should be encoded in `JSON'.
+
+Returns the JSON-RPC response, encoded in JSON, as a string.
+
+This is the main entry point into the RPC layer. This is the
+method that decodes the RPC request and executes it. This method
+is transport-agnostic - transport has to be implemented
+separately."
+  (jrpc--execute-request
+   (jrpc--request-from-json)))
+
+
+(defun jrpc--request-from-json (json)
+  "Decode a request from `JSON' into a `jrpc-request'.
+
+Relevant errors will be raised if the request is invalid."
+  (let* ((request-alist (jrpc--decode-request-json json))
+         (jsonrpc (jrpc-alist-get request-alist "request"))
+         (method (jrpc-alist-get request-alist "method"))
+         (params (jrpc-alist-get request-alist "params"))
+         (id (jrpc-alist-get request-alist "id"))
+         ;; If there's no `jsonrpc' parameter, we assume this is probably a
+         ;; jsonrpc 1.0 request.
+         (appears-to-be-jsonrpc-v1 (jrpc-null-p jsonrpc))
+         (is-jsonrpc-v2.0 (and (stringp jsonrpc)
+                               (string= jsonrpc "2.0"))))
+    ;; The supported jsonrpc versions are 2.0 and lower. Other versions are not
+    ;; supported.
+    (unless (or is-jsonrpc-v2.0
+                appears-to-be-jsonrpc-v1)
+      (jrpc-invalid-request-error
+       "If the `jsonrpc` parameter is included, it must be \"2.0\" exactly."))
+    (unless method
+      (jrpc-invalid-request-error
+       "`method` was not provided.'"))
+    (unless (stringp method)
+      (jrpc-invalid-request-error
+       "`method` should be a string."))
+    ;; `params' should be a list of arguments, but it is optional. We have to
+    ;; allow a nil value.
+    (unless (or (jrpc-null-p params)
+                (listp params))
+      ;; TODO: Should this be a jrpc-invalid-params-error?
+      (jrpc-invalid-request-error
+       (concat "`params` was provided, but it was not an array. Could not "
+               "decode the parameters into a list.")))
+    (unless id
+      (jrpc-invalid-request-error "`id` not provided"))
+    (unless (integerp id)
+      (jrpc-invalid-request-error "`id` should be an integer."))
+    (jrpc-request :jsonrpc jsonrpc
+                  :method method
+                  :params params
+                  :id id)))
+
+
+(defun jrpc--decode-request-json (json)
+  ;; TODO: We want to decode the Jason in a special that spits out the right
+  ;;   output. E.g. arrays should be turned into lists, not vectors.
+  (json-read-from-string json))
 
 
 (cl-defstruct jrpc-request
