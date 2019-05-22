@@ -6,6 +6,16 @@
 (require 'json)
 
 
+(defvar jrpc-exposed-functions '()
+  "List of functions that can be executed via POST request.
+
+This list is used by `jrpc-handler-eval-function' to determine
+which functions it will accept. It's a security measure to ensure
+only the functions you want are exposed. If you want to post a
+function to \"/eval-function\", it must be on this list or it
+will not be executed.")
+
+
 (defun jrpc-nil-p (value)
   "Is `VALUE' exactly nil?
 
@@ -29,16 +39,6 @@ Other falsey values, such as 0, do not count. Note that the empty
   "Is `VALUE' an empty string?"
   (and (stringp value)
        (string= value "")))
-
-
-(defvar jrpc-exposed-functions '()
-  "List of functions that can be executed via POST request.
-
-This list is used by `jrpc-handler-eval-function' to determine
-which functions it will accept. It's a security measure to ensure
-only the functions you want are exposed. If you want to post a
-function to \"/eval-function\", it must be on this list or it
-will not be executed.")
 
 
 (defun jrpc-alist-get (key alist)
