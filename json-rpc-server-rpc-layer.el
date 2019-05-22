@@ -1,6 +1,14 @@
+;; -*- lexical-binding: t -*-
+
 ;; Package that allows external JSON-RPC calls to Emacs.
 
+;; External requires
 (require 'elnode)
+
+
+;; Elnode needs to be monkey-patched because of a small bug that makes it
+;; unusable on Emacs 25.1+
+(require 'jrpc-elnode-monkeypatch)
 
 
 (defun jrpc-nil-p (value)
@@ -26,21 +34,6 @@ Other falsey values, such as 0, do not count. Note that the empty
   "Is `VALUE' an empty string?"
   (and (stringp value)
        (string= value "")))
-
-
-;; --------------------------------------------------------------------------
-
-
-;; -*- lexical-binding: t -*-
-
-
-;; External requires
-(require 'elnode)
-
-
-;; Elnode needs to be monkey-patched because of a small bug that makes it
-;; unusable on Emacs 25.1+
-(require 'jrpc-elnode-monkeypatch)
 
 
 (defvar jrpc-exposed-functions '()
