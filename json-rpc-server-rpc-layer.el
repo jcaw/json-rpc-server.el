@@ -16,12 +16,13 @@ function to \"/eval-function\", it must be on this list or it
 will not be executed.")
 
 
-(defun jrpc-nil-p (value)
-  "Is `VALUE' exactly nil?
+(defun jrpc-null-p (value)
+  "Is `VALUE' either nil, or json-null?
 
 Other falsey values, such as 0, do not count. Note that the empty
-  list is equivalent to nil, so the empty list counts."
-  (eq value nil))
+list is equivalent to nil, so the empty list counts as nil."
+  (or (eq value nil)
+      (eq value json-null)))
 
 
 (defun jrpc--string-to-int (string)
