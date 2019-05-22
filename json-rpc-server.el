@@ -287,6 +287,24 @@ Also note that this response will *always* be tagged as JSON-RPC
   id)
 
 
+(defun jrpc-response-to-alist (instance)
+  "Convert a jrpc response object into an alist so it can be encoded into JSON."
+  (list (cons "json-version" (jrpc-response-json-version instance))
+        (cons "result" (jrpc-response-result instance))
+        (cons "error" (jrpc-error-to-alist (jrpc-response-error instance)))
+        (cons "id" (jrpc-response-id instance))))
+
+
+(defun jrpc-error-to-alist (instance)
+  "Convert a jrpc error object into an alist so it can be encoded into JSON.
+
+If instance is nil, nil will be returned."
+  (when instance
+    (list (cons "code" (jrpc-error-code instance))
+          (cons "message" (jrpc-error-message instance))
+          (cons "data" (jrpc-error-data instance)))))
+
+
 (defun jrpc-expose-function (func)
   "Expose a function to \"/eval-function\".
 
