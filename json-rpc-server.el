@@ -148,7 +148,7 @@ its own function to enable custom body handling."
      (point-max))))
 
 
-(defun jrpc-parse-json-body (httpcon)
+(defun jrpc--parse-json-body (httpcon)
   (let* ((body (jrpc--extract-body httpcon))
          (decoded-body (ignore-errors (json-read-from-string body))))
     (cond ((not body)
@@ -176,7 +176,7 @@ its own function to enable custom body handling."
       (elnode-send-400 httpcon "Could not parse content type."))
      (t (if (string-match "/json$" parsed-type)
             ;; The document is json. Return the decoded json body.
-            (jrpc-parse-json-body httpcon)
+            (jrpc--parse-json-body httpcon)
           (elnode-send-400
            httpcon
            (concat
