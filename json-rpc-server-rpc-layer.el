@@ -3,6 +3,9 @@
 ;; Package that allows external JSON-RPC calls to Emacs.
 
 
+(require 'json)
+
+
 (defun jrpc-nil-p (value)
   "Is `VALUE' exactly nil?
 
