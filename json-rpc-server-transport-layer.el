@@ -1,3 +1,9 @@
+(require 'elnode)
+
+
+;; Elnode needs to be monkey-patched because of a small bug that makes it
+;; unusable on Emacs 25.1+
+(require 'jrpc-elnode-monkeypatch)
 
 
 
