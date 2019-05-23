@@ -77,6 +77,7 @@ Relevant errors will be raised if the request is invalid."
          ;; If there's no `jsonrpc' parameter, we assume this is probably a
          ;; jsonrpc 1.0 request.
          (appears-to-be-jsonrpc-v1 (jrpc-null-p jsonrpc))
+         ;; It's jsonrpc 2.0 iff the jsonrpc string is "2.0" *exactly*.
          (is-jsonrpc-v2.0 (and (stringp jsonrpc)
                                (string= jsonrpc "2.0"))))
     ;; The supported jsonrpc versions are 2.0 and lower. Other versions are not
