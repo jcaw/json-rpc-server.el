@@ -136,14 +136,7 @@ Relevant errors will be raised if the request is invalid."
         ;; symbols, not strings.
         (json-key-type 'symbol)
         )
-    (condition-case err
-        (json-read-from-string json)
-      ;; We wrap our errors for the sake of jrpc error handling, but we do want
-      ;; to be able to debug here.
-      ((debug error)
-       ;; Send a jrpc-specific signal.
-       (signal jrpc-invalid-json `((message "There was an error decoding the json.")
-                                   (original-error ,(cons (car err) (cdr err)))))))))
+    (json-read-from-string json)))
 
 
 (cl-defstruct jrpc-request
