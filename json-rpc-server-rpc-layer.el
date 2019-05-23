@@ -77,7 +77,8 @@ list is equivalent to nil, so the empty list counts as nil."
       "Function has not been exposed (it may or may not exist). Cannot "
       "execute. Please expose this function with `jrpc-expose-function' "
       "if you want to call it remotely.")))
-  ;; TODO: Check if function is callable with args.
+  ;; TODO: Check if function is callable with args. Can the function signature
+  ;; be checked?
   (condition-case err
       (apply func args)
     (error
