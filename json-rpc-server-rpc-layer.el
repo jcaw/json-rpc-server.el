@@ -16,6 +16,11 @@ function to \"/eval-function\", it must be on this list or it
 will not be executed.")
 
 
+(define-error 'jrpc-invalid-request
+  ;; Error to be raised when a request is invalid. 
+  "An invalid request was supplied.")
+
+
 (defun jrpc-null-p (value)
   "Is `VALUE' either nil, or json-null?
 
@@ -84,30 +89,34 @@ Relevant errors will be raised if the request is invalid."
     ;; supported.
     (unless (or is-jsonrpc-v2.0
                 appears-to-be-jsonrpc-v1)
-      (jrpc-invalid-request-error
-       "If the `jsonrpc` parameter is included, it must be \"2.0\" exactly."))
+      (signal
+       'jrpc-invalid-request
+       (concat "Only jsonrpc versions 1 to 2.0 are supported. jsonrpc 2.0 is "
+               "preferred. If the `jsonrpc` parameter is included, it must be "
+               "\"2.0\" exactly.")))
     (unless method
-      (jrpc-invalid-request-error
-       "`method` was not provided.'"))
+      (signal 'jrpc-invalid-request "`method` was not provided.'"))
+    ;; TODO: Perhaps ensure the function is not a `json-rpc-server' function?
+    ;; E.g. disallow the `jrpc-' prefix? Perhaps not. Unlikely to be reliable.
+    ;; User should simply never expose those functions.
     (unless (stringp method)
-      (jrpc-invalid-request-error
-       "`method` should be a string."))
+      (signal 'jrpc-invalid-request "`method` should be a string."))
     ;; `params' should be a list of arguments, but it is optional. We have to
     ;; allow a nil value.
     (unless (or (jrpc-null-p params)
                 (listp params))
       ;; TODO: Should this be a jrpc-invalid-params-error?
-      (jrpc-invalid-request-error
-       (concat "`params` was provided, but it was not an array. Could not "
-               "decode the parameters into a list.")))
+      (signal 'jrpc-invalid-request
+              (concat "`params` was provided, but it was not an array. Could "
+                      "not decode the parameters into a list.")))
     (unless id
-      (jrpc-invalid-request-error "`id` not provided"))
+      (signal 'jrpc-invalid-request "`id` not provided"))
     (unless (integerp id)
-      (jrpc-invalid-request-error "`id` should be an integer."))
-    (jrpc-request :jsonrpc jsonrpc
-                  :method method
-                  :params params
-                  :id id)))
+      (signal 'jrpc-invalid-request "`id` should be an integer."))
+    (make-jrpc-request :jsonrpc jsonrpc
+                       :method method
+                       :params params
+                       :id id)))
 
 
 (defun jrpc--decode-request-json (json)
