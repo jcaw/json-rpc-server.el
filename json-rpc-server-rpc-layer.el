@@ -270,6 +270,20 @@ Relevant errors will be raised if the request is invalid."
   (error "Not Implemented"))
 
 
+(defun jrpc--decode-id (request-in-json)
+  "Attempt to decode the ID and NOTHING ELSE.
+
+If no ID could be decoded, returns nil.
+
+This method will not raise errors."
+  (ignore-errors
+    (let ((id (alist-get
+             'id
+             (jrpc--decode-request-json request-in-json))))
+    (when (integerp id)
+      id))))
+
+
 (defun jrpc-handle (request-in-json)
   "Handle a JSON-RPC request.
 
@@ -281,12 +295,20 @@ This is the main entry point into the RPC layer. This is the
 method that decodes the RPC request and executes it. This method
 is transport-agnostic - transport has to be implemented
 separately."
-  (condition-case err
-      (jrpc--encode-result-response
-       (jrpc--execute-request
-        (jrpc--request-from-json request-in-json)))
-    (error
-     (jrpc--encode-error-response err))))
+  ;; TODO: Handle batch objects too.
+  (let (
+        ;; We attempt to decode the id using a robust method, to give us the
+        ;; maximum chance of being able to include it in the response if there is
+        ;; an error. However, this may still fail.
+        (id (jrpc--decode-id request-in-json))
+        )
+    (condition-case err
+        (jrpc--encode-result-response
+         (jrpc--execute-request
+          (jrpc--request-from-json request-in-json))
+         id)
+      (error
+       (jrpc--encode-error-response err)))))
 
 
 (defun jrpc-expose-function (func)
