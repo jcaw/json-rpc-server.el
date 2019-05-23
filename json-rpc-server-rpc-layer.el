@@ -90,28 +90,28 @@ list is equivalent to nil, so the empty list counts as nil."
   "Execute a remote procedure call.
 
 `REQUEST' should be a `jrpc-request' object."
-  (let ((method-name (jrpc-request-method request))
-        ;; Because we can only transport strings via JSON, the method name has
-        ;; to be encoded as a string. That means we have to manually convert it
-        ;; into a symbol before invocation.
-        ;;
-        ;; This conversion should include appropriate error handling.
-        (method-symbol
-         (condition-case nil
-             (intern method)
-           (error
-            (signal
-             'jrpc-invalid-request
-             (concat
-              "`method` could not be converted to an Elisp symbol. It "
-              "should be a string that converts into an elisp symbol.")))))
-        (args (jrpc-request-params request)))
   (unless (eq (type-of request)
               'jrpc-request)
     ;; This should never be reached from outside the package. `request' will
     ;; always be passed as a `jrpc-request' object. But include it, just in
     ;; case.
     (signal 'jrpc-type-error "`request' should be a `jrpc-request' object."))
+  (let* ((method-name (jrpc-request-method request))
+         ;; Because we can only transport strings via JSON, the method name has
+         ;; to be encoded as a string. That means we have to manually convert it
+         ;; into a symbol before invocation.
+         (method-symbol
+          ;; I don't know what kind of strings fail to convert to symbols, but
+          ;; add error handling just in case.
+          (condition-case nil
+              (intern method-name)
+            (error
+             (signal
+              'jrpc-invalid-request
+              (concat
+               "`method` could not be converted to an Elisp symbol. It "
+               "should be a string that converts into an elisp symbol.")))))
+         (args (jrpc-request-params request)))
     (jrpc--call-function method-symbol args)))
 
 
