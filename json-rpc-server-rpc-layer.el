@@ -120,9 +120,30 @@ Relevant errors will be raised if the request is invalid."
 
 
 (defun jrpc--decode-request-json (json)
-  ;; TODO: We want to decode the Jason in a special that spits out the right
-  ;;   output. E.g. arrays should be turned into lists, not vectors.
-  (json-read-from-string json))
+  ;; Set some custom options for the JSON decoder.
+  (let (
+        ;; Arrays should be decoded as lists, because this is the array-like
+        ;; type most methods are going to expect.
+        ;;
+        ;; This adds a limitation to the RPC server. Some functions may expect
+        ;; vectors, but only one type of list can be transferred via JSON. Those
+        ;; functions will receive lists. This will have to be fixed manually by
+        ;; the user with some kind of proxy function.
+        (json-array-type 'list)
+        ;; Hash tables are faster, but alists are more common.
+        (json-object-type 'alist)
+        ;; Keys should be symbols because alists keys should generally be
+        ;; symbols, not strings.
+        (json-key-type 'symbol)
+        )
+    (condition-case err
+        (json-read-from-string json)
+      ;; We wrap our errors for the sake of jrpc error handling, but we do want
+      ;; to be able to debug here.
+      ((debug error)
+       ;; Send a jrpc-specific signal.
+       (signal jrpc-invalid-json `((message "There was an error decoding the json.")
+                                   (original-error ,(cons (car err) (cdr err)))))))))
 
 
 (cl-defstruct jrpc-request
