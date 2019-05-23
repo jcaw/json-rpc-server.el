@@ -10,7 +10,7 @@
 (progn
   ;; TODO: Find how to organize Elisp tests hierarchically.
   (ert-deftest test-jrpc--request-from-json ()
-    "Test class for `jrpc--request-from-json'.
+    "Test function for `jrpc--request-from-json'.
 
 Test whether it decodes request json properly, and raises the
 correct errors for flawed json.
