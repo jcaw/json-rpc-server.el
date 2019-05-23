@@ -116,21 +116,6 @@ list is equivalent to nil, so the empty list counts as nil."
     (jrpc--call-function method-symbol args)))
 
 
-(defun jrpc-handle (json)
-  "Handle a JSON-RPC request.
-
-The request should be encoded in `JSON'.
-
-Returns the JSON-RPC response, encoded in JSON, as a string.
-
-This is the main entry point into the RPC layer. This is the
-method that decodes the RPC request and executes it. This method
-is transport-agnostic - transport has to be implemented
-separately."
-  (jrpc--execute-request
-   (jrpc--request-from-json)))
-
-
 (defun jrpc--request-from-json (json)
   "Decode a request from `JSON' into a `jrpc-request'.
 
@@ -198,6 +183,21 @@ Relevant errors will be raised if the request is invalid."
         (json-key-type 'symbol)
         )
     (json-read-from-string json)))
+
+
+(defun jrpc-handle (json)
+  "Handle a JSON-RPC request.
+
+The request should be encoded in `JSON'.
+
+Returns the JSON-RPC response, encoded in JSON, as a string.
+
+This is the main entry point into the RPC layer. This is the
+method that decodes the RPC request and executes it. This method
+is transport-agnostic - transport has to be implemented
+separately."
+  (jrpc--execute-request
+   (jrpc--request-from-json)))
 
 
 (cl-defstruct jrpc-request
