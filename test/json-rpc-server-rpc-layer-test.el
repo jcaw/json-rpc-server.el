@@ -81,30 +81,30 @@ Test whether it decodes json correctly, in the way I want.
 
 Note that this does not test the functionality of `json.el'. It
 only tests the additional conditions imposed by the
-`jrpc--decode-request-json' method." )
-  ;; List decoding
-  (progn
-    ;; Simple members
-    (should (equal (jrpc--decode-request-json
-                    "[1, 2, 3]")
-                   '(1 2 3)))
-    (should (equal (jrpc--decode-request-json
-                    "[\"first\", \"second\", \"third\"]")
-                   '("first" "second" "third"))))
+`jrpc--decode-request-json' method."
+    ;; List decoding
+    (progn
+      ;; Simple members
+      (should (equal (jrpc--decode-request-json
+                      "[1, 2, 3]")
+                     '(1 2 3)))
+      (should (equal (jrpc--decode-request-json
+                      "[\"first\", \"second\", \"third\"]")
+                     '("first" "second" "third"))))
 
-  ;; Index and object decoding.
-  ;;
-  ;; Indexes should be symbols, and the result should be an alist.
-  (should (equal (jrpc--decode-request-json
-                  "{\"index1\": \"value1\", \"index2\": \"value2\"}")
-                 '((index1 . "value1")
-                   (index2 . "value2"))))
+    ;; Index and object decoding.
+    ;;
+    ;; Indexes should be symbols, and the result should be an alist.
+    (should (equal (jrpc--decode-request-json
+                    "{\"index1\": \"value1\", \"index2\": \"value2\"}")
+                   '((index1 . "value1")
+                     (index2 . "value2"))))
 
-  ;; Malformed json should raise a specific error, so it can be caught.
-  (should-error (jrpc--decode-request-json
-                 ;; Some malformed JSON input.
-                 "als;d'asfoasf")
-                :type 'json-readtable-error)
+    ;; Malformed json should raise a specific error, so it can be caught.
+    (should-error (jrpc--decode-request-json
+                   ;; Some malformed JSON input.
+                   "als;d'asfoasf")
+                  :type 'json-readtable-error))
   )
 
 
