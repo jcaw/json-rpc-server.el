@@ -161,8 +161,8 @@ https://www.jsonrpc.org/specification"
 
 (cl-defstruct jrpc-error
   "Object representing a JSON-RPC error."
-  (code :type int)
-  (message :type string)
+  (code (:type int))
+  (message (:type string))
   (data nil))
 
 
@@ -170,7 +170,7 @@ https://www.jsonrpc.org/specification"
                (:constructor nil)
                (:constructor make-jrpc-response-error
                              (&key
-                              (error :type jrpc-eror)
+                              (error (:type jrpc-eror))
                               id)
                              "Construct a JSON-RPC response for an error.")
                (:constructor make-jrpc-response-result
