@@ -135,6 +135,14 @@ for that function."
     ;; Check it won't accept something other than a request
     (should-error (jrpc--execute-request "a string")
                   :type 'jrpc-type-error)
+
+    ;; Temporarily expose `+' and ensure it executes correctly.
+    (let ((jrpc-exposed-functions '(+)))
+      (should (= (jrpc--execute-request (make-jrpc-request
+                                         :method "+"
+                                         :params '(1 2 3)
+                                         :id 1))
+                 6))))
   )
 
 
