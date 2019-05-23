@@ -114,6 +114,4 @@ only tests the additional conditions imposed by the
   )
 
 
-;; TODO: Do we need to provide?
-;; (provide 'json-rpc-server-rpc-layer-test)
 ;;; json-rpc-server-rpc-layer-test.el ends here
