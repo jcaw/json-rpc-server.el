@@ -156,7 +156,7 @@ list is equivalent to nil, so the empty list counts as nil."
       "if you want to call it remotely.")))
   ;; TODO: Check if function is callable with args. Can the function signature
   ;; be checked?
-  (condition-case err
+  (condition-case-unless-debug err
       (apply func args)
     (error
      (signal 'jrpc-error-calling-method
