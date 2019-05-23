@@ -107,26 +107,34 @@ only tests the additional conditions imposed by the
                   :type 'json-readtable-error))
 
   (ert-deftest test-jrpc--execute-request ()
-    "Test for `jrpc--execute-request'"
-    (defun jrpc--call-function (func args)
-      "Patched version that just checks the types of the arguments."
+    "Test for `jrpc--execute-request'.
+
+Note that this does not check the functionality of the underlying
+`jrpc--call-function' thoroughly. That is done in the unit test
+for that function."
+    (defun jrpc--call-function-patch (func args)
+      "Patched `jrpc--call-function' that just checks the types of the arguments."
       (should (symbolp func))
       ;; Note that nil counts as a list.
       (should (listp args)))
 
-    ;; Check it executes okay with a simple method call
-    (jrpc--execute-request (make-jrpc-request
-                            :method "message"
-                            :params '("this is a %s message" "test")
-                            :id 1))
-    ;; Check it executes okay no arguments
-    (jrpc--execute-request (make-jrpc-request
-                            :method "message"
-                            :params nil
-                            :id 1))
+    ;; Mock `jrpc--call-function' for these methods
+    (cl-letf (((symbol-function 'jrpc--call-function)
+               'jrpc--call-function-patch))
+      ;; Check it executes okay with a simple method call
+      (jrpc--execute-request (make-jrpc-request
+                              :method "message"
+                              :params '("this is a %s message" "test")
+                              :id 1))
+      ;; Check it executes okay no arguments
+      (jrpc--execute-request (make-jrpc-request
+                              :method "message"
+                              :params nil
+                              :id 1)))
+
     ;; Check it won't accept something other than a request
     (should-error (jrpc--execute-request "a string")
-                  :type 'jrpc-type-error))
+                  :type 'jrpc-type-error)
   )
 
 
