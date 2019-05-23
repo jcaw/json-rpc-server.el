@@ -21,6 +21,12 @@ will not be executed.")
   "An invalid request was supplied.")
 
 
+(define-error 'jrpc-error-calling-method
+  ;; Error to be raised when there was an error calling the procedure specified
+  ;; by the RPC request.
+  "There was an error calling the method.")
+
+
 (defun jrpc-null-p (value)
   "Is `VALUE' either nil, or json-null?
 
@@ -53,6 +59,50 @@ list is equivalent to nil, so the empty list counts as nil."
     (and pair
          (eq (type-of pair) 'cons)
          (cdr pair))))
+
+
+(defun jrpc--call-function (func args)
+  ;; Check if the function is callable is close to calling the function as
+  ;; possible.
+  (unless (member func jrpc-exposed-functions)
+    (signal
+     jrpc-invalid-function
+     (concat
+      "Function has not been exposed (it may or may not exist). Cannot "
+      "execute. Please expose this function with `jrpc-expose-function' "
+      "if you want to call it remotely.")))
+  ;; TODO: Check if function is callable with args.
+  (condition-case err
+      (apply func args)
+    (error
+     (signal 'jrpc-error-calling-method
+             `((message . "There was an error calling the method.")
+               (error . ,err))))))
+
+
+(defun jrpc--execute-request (request)
+  "Execute a remote procedure call.
+
+`REQUEST' should be a `jrpc-request' object."
+  (assert (eq (type-of request)
+              'jrpc-request))
+  (let ((method-name (jrpc-request-method request))
+        ;; Because we can only transport strings via JSON, the method name has
+        ;; to be encoded as a string. That means we have to manually convert it
+        ;; into a symbol before invocation.
+        ;;
+        ;; This conversion should include appropriate error handling.
+        (method-symbol
+         (condition-case nil
+             (intern method)
+           (error
+            (signal
+             'jrpc-invalid-request
+             (concat
+              "`method` could not be converted to an Elisp symbol. It "
+              "should be a string that converts into an elisp symbol.")))))
+        (args (jrpc-request-params request)))
+    (jrpc--call-function method-symbol args)))
 
 
 (defun jrpc-handle (json)
