@@ -70,10 +70,10 @@ separately."
 
 Relevant errors will be raised if the request is invalid."
   (let* ((request-alist (jrpc--decode-request-json json))
-         (jsonrpc (jrpc-alist-get request-alist "request"))
-         (method (jrpc-alist-get request-alist "method"))
-         (params (jrpc-alist-get request-alist "params"))
-         (id (jrpc-alist-get request-alist "id"))
+         (jsonrpc       (alist-get 'jsonrpc request-alist))
+         (method        (alist-get 'method  request-alist))
+         (params        (alist-get 'params  request-alist))
+         (id            (alist-get 'id      request-alist))
          ;; If there's no `jsonrpc' parameter, we assume this is probably a
          ;; jsonrpc 1.0 request.
          (appears-to-be-jsonrpc-v1 (jrpc-null-p jsonrpc))
