@@ -266,8 +266,18 @@ Relevant errors will be raised if the request is invalid."
   (error "Not Implemented"))
 
 
-(defun jrpc--encode-result-response (result)
-  (error "Not Implemented"))
+(defun jrpc--encode-result-response (result id)
+  "Create a JSON-RPC 2.0 response with a successful result.
+
+`RESULT' should be the raw result data returned by the procedure
+invoked.
+
+`ID' should be the id in the original JSON-RPC request, so the
+response can be synchronized to it."
+  (json-encode
+   (jrpc-response-to-alist
+    (make-jrpc-response-result :result result
+                               :id id))))
 
 
 (defun jrpc--decode-id (request-in-json)
