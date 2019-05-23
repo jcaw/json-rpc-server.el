@@ -27,6 +27,12 @@ will not be executed.")
   "There was an error calling the method.")
 
 
+(define-error 'jrpc-type-error
+  ;; Error to be raised when type mismatch is detected (usually, because a
+  ;; supplied variable had the wrong type).
+  "A variable had the wrong type.")
+
+
 (defun jrpc-null-p (value)
   "Is `VALUE' either nil, or json-null?
 
@@ -84,8 +90,6 @@ list is equivalent to nil, so the empty list counts as nil."
   "Execute a remote procedure call.
 
 `REQUEST' should be a `jrpc-request' object."
-  (assert (eq (type-of request)
-              'jrpc-request))
   (let ((method-name (jrpc-request-method request))
         ;; Because we can only transport strings via JSON, the method name has
         ;; to be encoded as a string. That means we have to manually convert it
@@ -102,6 +106,12 @@ list is equivalent to nil, so the empty list counts as nil."
               "`method` could not be converted to an Elisp symbol. It "
               "should be a string that converts into an elisp symbol.")))))
         (args (jrpc-request-params request)))
+  (unless (eq (type-of request)
+              'jrpc-request)
+    ;; This should never be reached from outside the package. `request' will
+    ;; always be passed as a `jrpc-request' object. But include it, just in
+    ;; case.
+    (signal 'jrpc-type-error "`request' should be a `jrpc-request' object."))
     (jrpc--call-function method-symbol args)))
 
 
