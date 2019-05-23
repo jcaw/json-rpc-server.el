@@ -72,7 +72,7 @@ list is equivalent to nil, so the empty list counts as nil."
   ;; possible.
   (unless (member func jrpc-exposed-functions)
     (signal
-     jrpc-invalid-function
+     'jrpc-invalid-function
      (concat
       "Function has not been exposed (it may or may not exist). Cannot "
       "execute. Please expose this function with `jrpc-expose-function' "
