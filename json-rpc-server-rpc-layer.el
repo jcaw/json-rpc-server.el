@@ -17,7 +17,7 @@ will not be executed.")
 
 
 (define-error 'jrpc-invalid-request
-  ;; Error to be raised when a request is invalid. 
+  ;; Error to be raised when a request is invalid.
   "An invalid request was supplied.")
 
 
