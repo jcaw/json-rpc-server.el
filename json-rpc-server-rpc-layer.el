@@ -262,7 +262,15 @@ Relevant errors will be raised if the request is invalid."
     (json-read-from-string json)))
 
 
-(defun jrpc-handle (json)
+(defun jrpc--encode-error-response (error-raised)
+  (error "Not Implemented"))
+
+
+(defun jrpc--encode-result-response (result)
+  (error "Not Implemented"))
+
+
+(defun jrpc-handle (request-in-json)
   "Handle a JSON-RPC request.
 
 The request should be encoded in `JSON'.
@@ -273,8 +281,12 @@ This is the main entry point into the RPC layer. This is the
 method that decodes the RPC request and executes it. This method
 is transport-agnostic - transport has to be implemented
 separately."
-  (jrpc--execute-request
-   (jrpc--request-from-json)))
+  (condition-case err
+      (jrpc--encode-result-response
+       (jrpc--execute-request
+        (jrpc--request-from-json request-in-json)))
+    (error
+     (jrpc--encode-error-response err))))
 
 
 (defun jrpc-expose-function (func)
