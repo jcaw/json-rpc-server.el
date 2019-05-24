@@ -417,8 +417,8 @@ Usage example:
   message for the end user indicating the problem."
   (condition-case nil
       (progn
-        (json-encode err)
-        err)
+        (json-encode object)
+        object)
     (error "This object could not be encoded into JSON. This string was used instead.")))
 
 
