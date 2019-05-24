@@ -183,7 +183,12 @@ this structure."
 
 
 (defun jrpc-response-to-alist (instance)
-  "Convert a jrpc response object into an alist so it can be encoded into JSON."
+  "Convert a jrpc-response object to an alist.
+
+`INSTANCE' should be an instance of the `jrpc-response' object.
+
+This is necessary to encode into JSON. cl-structs cannot be
+encoded at the time of writing (json.el version 1.4)."
   (list (cons "jsonrpc" (jrpc-response-jsonrpc instance))
         (cons "result" (jrpc-response-result instance))
         (cons "error" (jrpc-error-for-response-to-alist
