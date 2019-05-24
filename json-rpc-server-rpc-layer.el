@@ -186,18 +186,19 @@ this structure."
   "Convert a jrpc response object into an alist so it can be encoded into JSON."
   (list (cons "jsonrpc" (jrpc-response-jsonrpc instance))
         (cons "result" (jrpc-response-result instance))
-        (cons "error" (jrpc-response-error-to-alist (jrpc-error-for-response instance)))
+        (cons "error" (jrpc-error-for-response-to-alist
+                       (jrpc-response-error instance)))
         (cons "id" (jrpc-response-id instance))))
 
 
-(defun jrpc-response-error-to-alist (instance)
+(defun jrpc-error-for-response-to-alist (instance)
   "Convert a jrpc error object into an alist so it can be encoded into JSON.
 
-If instance is nil, nil will be returned."
+If `INSTANCE' is nil, nil will be returned."
   (when instance
-    (list (cons "code" (jrpc-response-error-code instance))
-          (cons "message" (jrpc-response-error-message instance))
-          (cons "data" (jrpc-response-error-data instance)))))
+    (list (cons "code" (jrpc-error-for-response-code instance))
+          (cons "message" (jrpc-error-for-response-message instance))
+          (cons "data" (jrpc-error-for-response-data instance)))))
 
 
 ;; --------------------------------------------------------------------------
