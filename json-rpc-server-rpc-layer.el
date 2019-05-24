@@ -540,7 +540,10 @@ separately."
   (let (
         ;; We attempt to decode the id using a robust method, to give us the
         ;; maximum chance of being able to include it in the response if there is
-        ;; an error. However, this may still fail.
+        ;; an error.
+        ;;
+        ;; This may still fail - that's OK. We just want to maximize the chance
+        ;; of extracting it.
         (id (jrpc--decode-id request-in-json))
         )
     (condition-case err
