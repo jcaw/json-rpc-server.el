@@ -25,8 +25,15 @@ will not be executed.")
   ;; The program can capture errors of this class, and dispatch the specific
   ;; error to a handler which will decode its error code and construct a
   ;; response.
-  "An error was raised while processing the JSON-RPC request itself.")
-  "an error was raised while processing the JSON-RPC request itself")
+  ;;
+  ;; Please note that subclasses of this error should not be raised directly.
+  ;; They should be raised with `jrpc--raise-procedural-error'. This method
+  ;; attaches data to the errors in a particular structure - the handlers for
+  ;; these errors expect this structure.
+  ;;
+  ;; This error is an abstract error. It should never be used directly - only
+  ;; use its subclasses.
+  "An error was raised while processing the JSON-RPC request itself")
 
 
 (define-error 'jrpc-invalid-request
@@ -48,6 +55,11 @@ will not be executed.")
   'jrpc-procedural-error)
 
 
+(define-error 'jrpc-invalid-request-json
+  ;; Error to be raised when the JSON in a supplied request is invalid.
+  "The request's JSON was invalid.")
+
+
 (define-error 'jrpc-invalid-params
   ;; Error to be raised when the parameters supplied were not valid.
   "The parameters supplied were invalid"
@@ -65,6 +77,21 @@ will not be executed.")
   ;; Error to be raised an unforeseen error occurs.
   "An unforeseen error occurred"
   'jrpc-procedural-error)
+
+
+(defvar jrpc--error-codes
+  '((jrpc-invalid-request-json . -32700)
+    (jrpc-invalid-request      . -32600)
+    (jrpc-invalid-function     . -32601)
+    (jrpc-invalid-params       . -32602)
+    (jrpc-error-calling-method . -32603)
+    (jrpc-unforeseen-error     . -32603)
+    (jrpc-type-error           . -32603))
+  "Alist mapping procedural errors to their JSON-RPC 2.0 error codes.")
+
+
+(defvar jrpc--unknown-error-code  -32603
+  "Error code to be used for unknown errors.")
 
 
 (cl-defstruct jrpc-request
@@ -121,6 +148,34 @@ Also note that this response will *always* be tagged as JSON-RPC
   (result nil)
   (error nil)
   id)
+
+
+(defun jrpc--get-error-code (error-symbol)
+  "Get the JSON-RPC 2.0 specification error code for an error."
+  (interactive)
+  (or (alist-get error-symbol jrpc--error-codes)
+      jrpc--unknown-error-code))
+
+
+(cl-defun jrpc--raise-procedural-error (error-symbol
+                                     message
+                                     &key
+                                     (original-error nil))
+  "Raise a subclass of `jrpc-procedural-error'.
+
+Subclasses of `jrpc-procedual-error' should not be raised
+directly. This method should be used instead. It will attach data
+to the error in a particular structure. The error handlers expect
+this structure."
+  (when (eq error-symbol 'jrpc-procedural-error)
+    (error "%s"
+           (concat "`jrpc-procedural-error' is an abstract error. Don't "
+                   "try to raise it directly - only raise its sub-errors.")))
+  (let ((data `((message . ,message)
+                (json-rpc-error-code . ,(jrpc--get-error-code error-symbol)))))
+    (when original-error
+      (push (cons 'original-error original-error) data))
+    (signal error-symbol data)))
 
 
 (defun jrpc-response-to-alist (instance)
@@ -182,7 +237,7 @@ list is equivalent to nil, so the empty list counts as nil."
   ;; Check if the function is callable is close to calling the function as
   ;; possible.
   (unless (member func jrpc-exposed-functions)
-    (signal
+    (jrpc--raise-procedural-error
      'jrpc-invalid-function
      (concat
       "Function has not been exposed (it may or may not exist). Cannot "
@@ -193,9 +248,10 @@ list is equivalent to nil, so the empty list counts as nil."
   (condition-case-unless-debug err
       (apply func args)
     (error
-     (signal 'jrpc-error-calling-method
-             `((message . "There was an error calling the method.")
-               (error . ,err))))))
+     (jrpc--raise-procedural-error
+      'jrpc-error-calling-method
+      "There was an error calling the method."
+      :original-error err))))
 
 
 (defun jrpc--execute-request (request)
@@ -207,7 +263,9 @@ list is equivalent to nil, so the empty list counts as nil."
     ;; This should never be reached from outside the package. `request' will
     ;; always be passed as a `jrpc-request' object. But include it, just in
     ;; case.
-    (signal 'jrpc-type-error "`request' should be a `jrpc-request' object."))
+    (jrpc--raise-procedural-error
+     'jrpc-type-error
+     "`request' should be a `jrpc-request' object."))
   (let* ((method-name (jrpc-request-method request))
          ;; Because we can only transport strings via JSON, the method name has
          ;; to be encoded as a string. That means we have to manually convert it
@@ -218,7 +276,7 @@ list is equivalent to nil, so the empty list counts as nil."
           (condition-case nil
               (intern method-name)
             (error
-             (signal
+             (jrpc--raise-procedural-error
               'jrpc-invalid-request
               (concat
                "`method` could not be converted to an Elisp symbol. It "
@@ -246,30 +304,35 @@ Relevant errors will be raised if the request is invalid."
     ;; supported.
     (unless (or is-jsonrpc-v2.0
                 appears-to-be-jsonrpc-v1)
-      (signal
+      (jrpc--raise-procedural-error
        'jrpc-invalid-request
        (concat "Only jsonrpc versions 1 to 2.0 are supported. jsonrpc 2.0 is "
                "preferred. If the `jsonrpc` parameter is included, it must be "
                "\"2.0\" exactly.")))
     (unless method
-      (signal 'jrpc-invalid-request "`method` was not provided.'"))
+      (jrpc--raise-procedural-error
+       'jrpc-invalid-request "`method` was not provided.'"))
     ;; TODO: Perhaps ensure the function is not a `json-rpc-server' function?
     ;; E.g. disallow the `jrpc-' prefix? Perhaps not. Unlikely to be reliable.
     ;; User should simply never expose those functions.
     (unless (stringp method)
-      (signal 'jrpc-invalid-request "`method` should be a string."))
+      (jrpc--raise-procedural-error
+       'jrpc-invalid-request "`method` should be a string."))
     ;; `params' should be a list of arguments, but it is optional. We have to
     ;; allow a nil value.
     (unless (or (jrpc-null-p params)
                 (listp params))
       ;; TODO: Should this be a jrpc-invalid-params-error?
-      (signal 'jrpc-invalid-request
-              (concat "`params` was provided, but it was not an array. Could "
-                      "not decode the parameters into a list.")))
+      (jrpc--raise-procedural-error
+       'jrpc-invalid-request
+       (concat "`params` was provided, but it was not an array. Could "
+               "not decode the parameters into a list.")))
     (unless id
-      (signal 'jrpc-invalid-request "`id` not provided"))
+      (jrpc--raise-procedural-error
+       'jrpc-invalid-request "`id` not provided"))
     (unless (integerp id)
-      (signal 'jrpc-invalid-request "`id` should be an integer."))
+      (jrpc--raise-procedural-error
+       'jrpc-invalid-request "`id` should be an integer."))
     (make-jrpc-request :jsonrpc jsonrpc
                        :method method
                        :params params
@@ -293,7 +356,13 @@ Relevant errors will be raised if the request is invalid."
         ;; symbols, not strings.
         (json-key-type 'symbol)
         )
-    (json-read-from-string json)))
+    (condition-case err
+        (json-read-from-string json)
+      (error
+       (jrpc--raise-procedural-error
+        'jrpc-invalid-request-json
+        "There was an error decoding the request's JSON."
+        :original-error err)))))
 
 
 (defun jrpc--encode-error-response (error-raised)

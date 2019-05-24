@@ -104,7 +104,7 @@ only tests the additional conditions imposed by the
     (should-error (jrpc--decode-request-json
                    ;; Some malformed JSON input.
                    "als;d'asfoasf")
-                  :type 'json-readtable-error))
+                  :type 'jrpc-invalid-request-json))
 
   (ert-deftest test-jrpc--execute-request ()
     "Test for `jrpc--execute-request'.
