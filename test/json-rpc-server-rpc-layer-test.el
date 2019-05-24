@@ -232,6 +232,38 @@ it does not block with errors when it cannot decode the id."
 ;; Integration tests
 (progn
   ;; None yet.
+
+  (ert-deftest test-full-procedure-call-1 ()
+    "Test a valid procedure call to `+'"
+    ;; Temporarily expose "+"
+    (let ((jrpc-exposed-functions '(+)))
+      ;; Get the response first, then progressively check each part of its
+      ;; contents.
+      (let ((response (json-read-from-string
+                       (jrpc-handle
+                        (json-encode
+                         '(("jsonrpc" . "2.0")
+                           ("method"  . "+")
+                           ("params"  . [1 2 3])
+                           ("id"      . 21145)))))))
+        ;; Check each component, *then* check the full structure. We do this to
+        ;; make it easier to pinpoint why the test is failing.
+        (should (equal (alist-get 'jsonrpc response)
+                       "2.0"))
+        (should (eq (alist-get 'result response)
+                    6))
+        ;; The JSON-RPC 2.0 specification indicates that, on a successful
+        ;; response, the `error' parameter should not be present in the response
+        ;; at all. It cannot simply be null - it should not be there.
+        (should (eq (assoc 'error response)
+                    nil))
+        (should (eq (alist-get 'id response)
+                    21145))
+        (should (cl-equalp response
+                           '(('jsonrpc . "2.0")
+                             ('result  . 6)
+                             ('id      . 21145))))))
+    )
   )
 
 
