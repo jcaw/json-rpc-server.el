@@ -233,8 +233,8 @@ it does not block with errors when it cannot decode the id."
 (progn
   ;; None yet.
 
-  (ert-deftest test-full-procedure-call-1 ()
     "Test a valid procedure call to `+'"
+  (ert-deftest test-full-procedure-call--to-+ ()
     ;; Temporarily expose "+"
     (let ((jrpc-exposed-functions '(+)))
       ;; Get the response first, then progressively check each part of its
