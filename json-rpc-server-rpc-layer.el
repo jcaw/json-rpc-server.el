@@ -431,8 +431,7 @@ Usage example:
        :error (make-jrpc-error-for-response
                :code error-code
                :message error-message
-               :data additional-data)
-       )))))
+               :data additional-data))))))
 
 
 (defun jrpc--encode-result-response (result id)
