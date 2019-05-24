@@ -79,8 +79,8 @@ https://www.jsonrpc.org/specification"
   id)
 
 
-(cl-defstruct jrpc-error
-  "Object representing a JSON-RPC error."
+(cl-defstruct jrpc-response-error
+  "Object representing a JSON-RPC response's error."
   (code (:type int))
   (message (:type string))
   (data nil))
@@ -126,18 +126,18 @@ Also note that this response will *always* be tagged as JSON-RPC
   "Convert a jrpc response object into an alist so it can be encoded into JSON."
   (list (cons "jsonrpc" (jrpc-response-jsonrpc instance))
         (cons "result" (jrpc-response-result instance))
-        (cons "error" (jrpc-error-to-alist (jrpc-response-error instance)))
+        (cons "error" (jrpc-response-error-to-alist (jrpc-response-error instance)))
         (cons "id" (jrpc-response-id instance))))
 
 
-(defun jrpc-error-to-alist (instance)
+(defun jrpc-response-error-to-alist (instance)
   "Convert a jrpc error object into an alist so it can be encoded into JSON.
 
 If instance is nil, nil will be returned."
   (when instance
-    (list (cons "code" (jrpc-error-code instance))
-          (cons "message" (jrpc-error-message instance))
-          (cons "data" (jrpc-error-data instance)))))
+    (list (cons "code" (jrpc-response-error-code instance))
+          (cons "message" (jrpc-response-error-message instance))
+          (cons "data" (jrpc-response-error-data instance)))))
 
 
 ;; --------------------------------------------------------------------------
