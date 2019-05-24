@@ -41,10 +41,28 @@ will not be executed.")
   'jrpc-procedural-error)
 
 
+(define-error 'jrpc-invalid-function
+  ;; Error to be raised when the procedure to be invoked is not available.
+  "The function was not available to call."
+  'jrpc-procedural-error)
+
+
+(define-error 'jrpc-invalid-params
+  ;; Error to be raised when the parameters supplied were not valid.
+  "The parameters supplied were invalid."
+  'jrpc-procedural-error)
+
+
 (define-error 'jrpc-type-error
   ;; Error to be raised when type mismatch is detected (usually, because a
   ;; supplied variable had the wrong type).
   "A variable had the wrong type."
+  'jrpc-procedural-error)
+
+
+(define-error 'jrpc-unforeseen-error
+  ;; Error to be raised an unforeseen error occurs.
+  "An unforeseen error occurred."
   'jrpc-procedural-error)
 
 
