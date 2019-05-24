@@ -109,6 +109,10 @@ https://www.jsonrpc.org/specification"
 
 (cl-defstruct jrpc-error-for-response
   "Object representing a JSON-RPC response's error.
+
+Please note this is not an Emacs error. It's a collection of
+information *about* an error, as laid out in the JSON-RPC 2.0
+protocol, to be included as part of a JSON-RPC 2.0 response."
   (code (:type int))
   (message (:type string))
   (data nil))
