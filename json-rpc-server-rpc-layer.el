@@ -465,7 +465,7 @@ This method will not raise errors."
       id))))
 
 
-(defun jrpc-unknown-error-response (&optional id)
+(defun jrpc-unknown-error-response (&optional request-in-json)
   "Construct a JSON response indicating an unknown error.
 
 This is a utility method for the transport layer to use in a
@@ -476,8 +476,14 @@ debugger.
 
 To adhere to the JSON-RPC 2.0 protocol, the transport layer
 could (for example) implement a protected form that responds with
-an unknown error before the error is raised to the debugger."
-  (error "Not Implemented"))
+an unknown error before the error is raised to the debugger.
+
+If possible, please supply this method with the original JSON-RPC
+request, as a JSON string, in `REQUEST-IN-JSON'. It will be used
+by this method to extract as much information as possible for the
+response."
+  (jrpc-internal-error-response "An unknown error occurred"
+                                request-in-json))
 
 
 (defun jrpc-internal-error-response (message &optional request-in-json)
