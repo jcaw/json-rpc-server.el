@@ -425,7 +425,7 @@ Usage example:
 (defun jrpc--encode-error-response (jrpc-error id)
   (let* ((original-error-data (cdr jrpc-error))
          (error-message (alist-get 'message original-error-data))
-         (error-code (alist-get 'code original-error-data))
+         (error-code (alist-get 'json-rpc-error-code original-error-data))
          ;; The additional data should be an alist of additional data keys to
          ;; their data.
          (additional-data (list
@@ -563,7 +563,7 @@ separately."
           (jrpc--request-from-json request-in-json))
          id)
       (jrpc-procedural-error
-       (jrpc--encode-error-response err))
+       (jrpc--encode-error-response err id))
       ;; TODO: How to handle unaccounted for errors?
       )))
 
