@@ -16,21 +16,36 @@ function to \"/eval-function\", it must be on this list or it
 will not be executed.")
 
 
+(define-error 'jrpc-procedural-error
+  ;; This is the base class for all errors that occur during the handling of an
+  ;; RPC request. The purpose of this error class is to categorise all runtime
+  ;; errors that should produce an error code, per the JSON-RPC 2.0
+  ;; specification.
+  ;;
+  ;; The program can capture errors of this class, and dispatch the specific
+  ;; error to a handler which will decode its error code and construct a
+  ;; response.
+  "An error was raised while processing the JSON-RPC request itself.")
+
+
 (define-error 'jrpc-invalid-request
   ;; Error to be raised when a request is invalid.
-  "An invalid request was supplied.")
+  "An invalid request was supplied."
+  'jrpc-procedural-error)
 
 
 (define-error 'jrpc-error-calling-method
   ;; Error to be raised when there was an error calling the procedure specified
   ;; by the RPC request.
-  "There was an error calling the method.")
+  "There was an error calling the method."
+  'jrpc-procedural-error)
 
 
 (define-error 'jrpc-type-error
   ;; Error to be raised when type mismatch is detected (usually, because a
   ;; supplied variable had the wrong type).
-  "A variable had the wrong type.")
+  "A variable had the wrong type."
+  'jrpc-procedural-error)
 
 
 (cl-defstruct jrpc-request
