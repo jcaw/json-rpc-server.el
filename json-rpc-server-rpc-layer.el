@@ -408,8 +408,7 @@ Usage example:
       (progn
         (json-encode err)
         err)
-    (error "This object could not be encoded into JSON. This string was used instead."))
-  )
+    (error "This object could not be encoded into JSON. This string was used instead.")))
 
 
 (defun jrpc--encode-error-response (jrpc-error id)
