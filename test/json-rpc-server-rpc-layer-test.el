@@ -271,6 +271,27 @@ state. Thus this checks a limited type of functionality."
                              (result  . 6)
                              (id      . 21145))))))
     )
+
+  (ert-deftest test-full-procedure-call--changing-buffer ()
+    "Test a valid procedure call to `insert', with a temp buffer.
+
+This test is designed to test functionality that changes the
+state of the buffer.
+
+This only tests the change in the buffer - other tests are
+responsible for checking the actual response of the API."
+    ;; Temporarily expose "insert"
+    (let ((jrpc-exposed-functions '(insert)))
+      (with-temp-buffer
+        (jrpc-handle
+         (json-encode
+          '(("jsonrpc" . "2.0")
+            ("method"  . "insert")
+            ("params"  . ["this is a test string"])
+            ("id"      . 21145))))
+        (should (string= (buffer-string)
+                         "this is a test string"))))
+    )
   )
 
 
