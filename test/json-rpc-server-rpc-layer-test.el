@@ -259,6 +259,10 @@ it does not block with errors when it cannot decode the id."
                     nil))
         (should (eq (alist-get 'id response)
                     21145))
+        ;; Since Elisp has no reliable way of comparing alists with the same
+        ;; elements in different orders, this is sensitive to the *order* of the
+        ;; JSON object returned. The test will fail if the order changes. Not
+        ;; perfect.
         (should (cl-equalp response
                            '((jsonrpc . "2.0")
                              (result  . 6)
