@@ -377,13 +377,33 @@ Relevant errors will be raised if the request is invalid."
 
 
 (defun jrpc--replace-unencodable-object (object)
-  "Replace `OBJECT' if it can't safely be encoded into JSON.
+  "Replace `OBJECT' if it can't be encoded into JSON.
 
-This method attempts to encode `OBJECT' into JSON. If it can be
-encoded without error, that's fine - the original `OBJECT' is
-returned. If it cannot be encoded, a string is returned instead,
-indicating that the object could not be encoded properly."
-  (interactive)
+This function is designed to sanitise complex objects before they
+are encoded.
+
+Method:
+
+  1. This function attempts to encode `OBJECT' into JSON.
+
+  2a. If it works, that's fine - the original `OBJECT' is
+      returned, unaltered.
+
+  2b. If it can't be encoded, that's a problem. A string is
+      returned instead, indicating that the object could not be
+      encoded properly.
+
+Usage example:
+
+  Let's say an error was raised during method execution, and
+  we're trying it. This shouldn't be a problem, but an error can
+  theoretically contain any kind of data. There is a (very small)
+  risk that the error will contain data that can't be encoded,
+  crashing the JSON serializer.
+
+  We can call this method on the error to protect ourselves. If
+  the error can't be encoded, it will simply be replaced with a
+  message for the end user indicating the problem."
   (condition-case nil
       (progn
         (json-encode err)
