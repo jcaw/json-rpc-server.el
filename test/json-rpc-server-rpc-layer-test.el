@@ -272,6 +272,31 @@ state. Thus this checks a limited type of functionality."
                              (id      . 21145))))))
     )
 
+  (ert-deftest test-full-procedure-call--changing-internal-state ()
+    "Test a valid procedure call that just changes a variable.
+
+This test is designed to test an internal state change. It tests
+relatively minimal stay changing functionality. Only a variable
+is changed - things like the buffer should be unaffected."
+    ;; We have to define a function to change the variable, that takes a string
+    ;; name as input, since we can't transfer symbols via JSON.
+    (defun jrpc-custom-setq (var-name new-value)
+      (set (intern var-name) new-value))
+    (let (
+          ;; Temporarily expose this function
+          (jrpc-exposed-functions '(jrpc-custom-setq))
+          ;; This is the variable we will try to change
+          (test-var 10298)
+          )
+      (jrpc-handle
+       (json-encode
+        '(("jsonrpc" . "2.0")
+          ("method"  . "jrpc-custom-setq")
+          ("params"  . ["test-var" "this is a test string"])
+          ("id"      . 21145))))
+      (should (string= test-var
+                       "this is a test string"))))
+
   (ert-deftest test-full-procedure-call--changing-buffer ()
     "Test a valid procedure call to `insert', with a temp buffer.
 
