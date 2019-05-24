@@ -400,6 +400,21 @@ This method will not raise errors."
       id))))
 
 
+(defun jrpc-unknown-error-response (&optional id)
+  "Construct a JSON response indicating an unknown error.
+
+This is a utility method for the transport layer to use in a
+protected form. For example, let's say the transport layer
+invokes a function that triggers an error and debugging is
+enabled. The error will not be caught - it will invoke the
+debugger.
+
+To adhere to the JSON-RPC 2.0 protocol, the transport layer
+could (for example) implement a protected form that responds with
+an unknown error before the error is raised to the debugger."
+  (error "Not Implemented"))
+
+
 (defun jrpc-handle (request-in-json)
   "Handle a JSON-RPC request.
 
