@@ -364,6 +364,26 @@ this test is sufficient to check that for other error codes."
                     nil))
         ;; We don't check the exact string
         (should (stringp (alist-get 'message response-error))))))
+
+  (ert-deftest test-full-procedure-call--non-existant-function ()
+    "Test a procedure call to a function that has been exposed, but doesn't exist.
+
+This test is designed to trick the system up by making it think
+it is calling a valid function, causing an unexpected error when
+the function is invoked."
+    (let ((jrpc-exposed-functions '(jrpc-function-that-does-not-exist)))
+      (let* ((response (json-read-from-string
+                        (jrpc-handle
+                         (json-encode
+                          '(("method"  . "jrpc-function-that-does-not-exist")
+                            ("id"      . 1))))))
+             (response-error (alist-get 'error response)))
+        (should response)
+        ;; We only check the response code
+        (should (eq (alist-get 'code response-error)
+                    ;; This error code corresponds to "method not found" in the
+                    ;; JSON-RPC 2.0 specification.
+                    -32601)))))
   )
 
 
