@@ -365,8 +365,44 @@ Relevant errors will be raised if the request is invalid."
         :original-error err)))))
 
 
-(defun jrpc--encode-error-response (error-raised)
-  (error "Not Implemented"))
+(defun jrpc--replace-unencodable-object (object)
+  "Replace `OBJECT' if it can't safely be encoded into JSON.
+
+This method attempts to encode `OBJECT' into JSON. If it can be
+encoded without error, that's fine - the original `OBJECT' is
+returned. If it cannot be encoded, a string is returned instead,
+indicating that the object could not be encoded properly."
+  (interactive)
+  (condition-case nil
+      (progn
+        (json-encode err)
+        err)
+    (error "This object could not be encoded into JSON. This string was used instead."))
+  )
+
+
+(defun jrpc--encode-error-response (jrpc-error id)
+  (let* ((original-error-data (cdr jrpc-error))
+         (error-message (alist-get 'message original-error-data))
+         (error-code (alist-get 'code original-error-data))
+         ;; The additional data should be an alist of additional data keys to
+         ;; their data.
+         (additional-data (list
+                           (cons 'underlying-error
+                                 ;; Errors may theoretically contain arbitrary
+                                 ;; data, so we have to sanitize it.
+                                 (jrpc--replace-unencodable-object
+                                  (alist-get 'original-error
+                                             original-error-data))))))
+    (json-encode
+     (jrpc-response-to-alist
+      (make-jrpc-response-error
+       :id id
+       :error (make-jrpc-error-for-response
+               :code error-code
+               :message error-message
+               :data additional-data)
+       )))))
 
 
 (defun jrpc--encode-result-response (result id)
