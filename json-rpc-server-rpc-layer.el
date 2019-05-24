@@ -189,11 +189,16 @@ this structure."
 
 This is necessary to encode into JSON. cl-structs cannot be
 encoded at the time of writing (json.el version 1.4)."
-  (list (cons "jsonrpc" (jrpc-response-jsonrpc instance))
-        (cons "result" (jrpc-response-result instance))
-        (cons "error" (jrpc-error-for-response-to-alist
-                       (jrpc-response-error instance)))
-        (cons "id" (jrpc-response-id instance))))
+  (let ((response-error (jrpc-response-error instance)))
+    (list (cons "jsonrpc" (jrpc-response-jsonrpc instance))
+          ;; The JSON-RPC 2.0 specification requires ONLY an error OR a result.
+          ;; Not both. If there's an error, only include the error field. If
+          ;; not, we only include the result field.
+          (if response-error
+               (cons "error" (jrpc-error-for-response-to-alist
+                                   response-error))
+             (cons "result" (jrpc-response-result instance)))
+          (cons "id" (jrpc-response-id instance)))))
 
 
 (defun jrpc-error-for-response-to-alist (instance)
