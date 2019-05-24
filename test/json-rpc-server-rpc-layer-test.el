@@ -305,7 +305,7 @@ state of the buffer.
 
 This only tests the change in the buffer - other tests are
 responsible for checking the actual response of the API."
-    ;; Temporarily expose "insert"
+    ;; Temporarily expose `insert'
     (let ((jrpc-exposed-functions '(insert)))
       (with-temp-buffer
         (jrpc-handle
