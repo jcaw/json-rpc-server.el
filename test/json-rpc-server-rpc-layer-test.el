@@ -143,6 +143,66 @@ for that function."
                                          :params '(1 2 3)
                                          :id 1))
                  6))))
+
+
+  (ert-deftest test-jrpc-internal-error-response ()
+    "Test for `jrpc-internal-error-response'.
+
+Tests the correct JSON is constructed, and the correct errors raised."
+    ;; Check a simple message.
+    (should (cl-equalp (json-read-from-string
+                        (jrpc-internal-error-response "This is a test"))
+                       '((jsonrpc . "2.0")
+                         (error   . ((code    . -32700)
+                                     (message . "This is a test")
+                                     (data    . nil)))
+                         (id      . nil))))
+
+    ;; Check a request that holds an id
+    (should (cl-equalp (json-read-from-string
+                        (jrpc-internal-error-response
+                         "This is a test"
+                         "{\"method\": \"message\",\"id\": 12456,}"
+                         ))
+                       '((jsonrpc . "2.0")
+                         (error   . ((code    . -32700)
+                                     (message . "This is a test")
+                                     (data    . nil)))
+                         (id      . 12456))))
+
+    ;; Check wrong message types
+    (progn
+      (should-error (jrpc-internal-error-response nil)
+                    :type 'error)
+      (should-error (jrpc-internal-error-response 1)
+                    :type 'error)
+      (should-error (jrpc-internal-error-response '(("an" . "alist")))
+                    :type 'error))
+
+    ;; Check wrong JSON types
+    ;;
+    ;; These forms should execute without issue, but they should NOT contain an
+    ;; id.
+    (progn
+      ;; nil JSON
+      (should (not
+               (alist-get
+                'id
+                (json-read-from-string
+                 (jrpc-internal-error-response "This is a test" nil)))))
+      ;; Wrong JSON structure
+      (should (not
+               (alist-get
+                'id
+                (json-read-from-string
+                 (jrpc-internal-error-response "This is a test" "12980")))))
+      ;; Non-string JSON
+      (should (not
+               (alist-get
+                'id
+                (json-read-from-string
+                 (jrpc-internal-error-response "This is a test" 12980))))))
+    )
   )
 
 
