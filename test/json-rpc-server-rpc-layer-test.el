@@ -317,6 +317,53 @@ responsible for checking the actual response of the API."
         (should (string= (buffer-string)
                          "this is a test string"))))
     )
+
+  (ert-deftest test-full-procedure-call--unexposed-function ()
+    "Test a procedure call to a function that hasn't been exposed.
+
+This test is designed to test two things:
+
+  1. The error type of a function that has not been exposed. This
+     should match the JSON-RPC 2.0 specification. Specifically,
+     the error code needs to match.
+
+  2. The structure of an error response.
+
+Other integration tests will check other error codes, but they
+won't check the structure of the response. It is assumed that
+this test is sufficient to check that for other error codes."
+    ;; Temporarily expose no functions
+    (let ((jrpc-exposed-functions '()))
+      ;; Get the response first, then progressively check each part of its
+      ;; contents.
+      (let* ((response (json-read-from-string
+                        (jrpc-handle
+                         (json-encode
+                          '(("jsonrpc" . "2.0")
+                            ("method"  . "+")
+                            ("params"  . [1 2 3])
+                            ("id"      . 21145))))))
+             (response-error (alist-get 'error response)))
+        (should response)
+        ;; Check each component, *then* check the full structure. We do this to
+        ;; make it easier to pinpoint why the test is failing.
+        (should (equal (alist-get 'jsonrpc response)
+                       "2.0"))
+        ;; The JSON-RPC 2.0 specification indicates that, when an error is
+        ;; raised, the `result' parameter should not be present in the response
+        ;; at all. It cannot simply be null - it should not be there.
+        (should (eq (assoc 'result response)
+                    nil))
+        (should (eq (alist-get 'id response)
+                    21145))
+        (should (eq (alist-get 'code response-error)
+                    ;; This error code corresponds to "method not found" in the
+                    ;; JSON-RPC 2.0 specification.
+                    -32601))
+        (should (eq (alist-get 'data response-error)
+                    nil))
+        ;; We don't check the exact string
+        (should (stringp (alist-get 'message response-error))))))
   )
 
 
