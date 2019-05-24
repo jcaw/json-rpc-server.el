@@ -550,10 +550,8 @@ separately."
          id)
       (jrpc-procedural-error
        (jrpc--encode-error-response err))
-      (error
-       ;; There are a number of ways we might wish to handle unaccounted for
-       ;; errors. Segregate this, for now.
-       (jrpc--handle-unkown-error err)))))
+      ;; TODO: How to handle unaccounted for errors?
+      )))
 
 
 (defun jrpc-expose-function (func)
