@@ -512,10 +512,14 @@ separately."
 
 
 (defun jrpc-expose-function (func)
-  "Expose a function to \"/eval-function\".
+  "Expose a function to remote procedure calls.
 
-"
-  ;; TODO: Rewrite documentation for json rpc server
+Only functions that have been exposed can be executed remotely
+via the JSON-RPC protocol.
+
+Functions may only be invoked by name - lambda functions are not
+allowed (there would be no way to reference them remotely by
+name). `FUNC' is the function symbol to expose."
   (add-to-list 'jrpc-exposed-functions func))
 
 
