@@ -426,15 +426,21 @@ Usage example:
   (let* ((original-error-data (cdr jrpc-error))
          (error-message (alist-get 'message original-error-data))
          (error-code (alist-get 'json-rpc-error-code original-error-data))
+         (underlying-error (alist-get 'original-error
+                                      original-error-data))
          ;; The additional data should be an alist of additional data keys to
          ;; their data.
-         (additional-data (list
-                           (cons 'underlying-error
-                                 ;; Errors may theoretically contain arbitrary
-                                 ;; data, so we have to sanitize it.
-                                 (jrpc--replace-unencodable-object
-                                  (alist-get 'original-error
-                                             original-error-data))))))
+         (additional-data '()))
+    ;; Additional data should only have a value when additional data exists.
+    (when underlying-error
+      (add-to-list
+       'additional-data
+       (cons 'underlying-error
+             ;; Errors may theoretically contain arbitrary
+             ;; data, so we have to sanitize it.
+             (jrpc--replace-unencodable-object
+              unerlying-error))
+       t))
     (json-encode
      (jrpc-response-to-alist
       (make-jrpc-response-error
