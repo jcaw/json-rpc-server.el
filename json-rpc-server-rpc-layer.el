@@ -480,6 +480,45 @@ an unknown error before the error is raised to the debugger."
   (error "Not Implemented"))
 
 
+(defun jrpc-internal-error-response (message &optional request-in-json)
+  "Construct a JSON response indicating internal error `MESSAGE'.
+
+This is a utility method for the transport layer to use to
+generate a valid JSON-RPC 2.0 response related to an arbitrary
+internal error. For example, if there is an internal error in the
+transport layer, this could be used to wrap the error into a
+valid JSON-RPC 2.0 response.
+
+If possible, please supply this method with the original JSON-RPC
+request, as a JSON string, in `REQUEST-IN-JSON'. It will be used
+by this method to extract as much information as possible for the
+response."
+  ;; We manually construct the JSON from a string to minimise the chance of an
+  ;; unexpected error, or a strange encoding of the JSON.
+
+  ;; Ensure `MESSAGE' is a string to ensure it encodes predictably (i.e. as a
+  ;; string).
+  (unless (stringp message)
+    (error "`message' must be a string."))
+  (let ((id (or (jrpc--decode-id request-in-json)
+                "null")))
+    (format
+     "
+{
+    \"jsonrpc\": \"2.0\",
+    \"error\": {
+        \"code\": -32700,
+        \"message\": %s,
+        \"data\": null
+    },
+    \"id\": %s
+}"
+     ;; We encode the message explicitly to prevent something being injected
+     ;; into the JSON.
+     (json-encode message)
+     id)))
+
+
 (defun jrpc-handle (request-in-json)
   "Handle a JSON-RPC request.
 
