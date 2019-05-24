@@ -260,9 +260,9 @@ it does not block with errors when it cannot decode the id."
         (should (eq (alist-get 'id response)
                     21145))
         (should (cl-equalp response
-                           '(('jsonrpc . "2.0")
-                             ('result  . 6)
-                             ('id      . 21145))))))
+                           '((jsonrpc . "2.0")
+                             (result  . 6)
+                             (id      . 21145))))))
     )
   )
 
