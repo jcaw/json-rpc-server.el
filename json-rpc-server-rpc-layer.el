@@ -350,8 +350,12 @@ separately."
          (jrpc--execute-request
           (jrpc--request-from-json request-in-json))
          id)
+      (jrpc-procedural-error
+       (jrpc--encode-error-response err))
       (error
-       (jrpc--encode-error-response err)))))
+       ;; There are a number of ways we might wish to handle unaccounted for
+       ;; errors. Segregate this, for now.
+       (jrpc--handle-unkown-error err)))))
 
 
 (defun jrpc-expose-function (func)
