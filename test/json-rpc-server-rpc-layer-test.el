@@ -203,6 +203,29 @@ Tests the correct JSON is constructed, and the correct errors raised."
                 (json-read-from-string
                  (jrpc-internal-error-response "This is a test" 12980))))))
     )
+
+  (ert-deftest test-jrpc--decode-id ()
+    "Test for `jrpc--decode-id'.
+
+Tests that it decodes the id in minimalistic JSON, and also that
+it does not block with errors when it cannot decode the id."
+    ;; It should extract the id even if the overall request is invalid.
+    (should (eq (jrpc--decode-id "{\"id\": 10249}")
+                10249))
+
+    ;; These are all invalid JSON, so they should return nil. Nothing should
+    ;; raise an error.
+    (progn
+      ;; Null id
+      (should (eq (jrpc--decode-id "{\"id\": null}")
+                  nil))
+      ;; Invalid id type: string
+      (should (eq (jrpc--decode-id "{\"id\": \"10249\"}")
+                  nil))
+      ;; Invalid id type: object (dictionary)
+      (should (eq (jrpc--decode-id "{\"id\": {\"nested\": \"dict\"}}")
+                  nil)))
+    )
   )
 
 
