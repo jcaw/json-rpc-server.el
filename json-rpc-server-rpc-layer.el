@@ -238,7 +238,11 @@ list is equivalent to nil, so the empty list counts as nil."
 
 
 (defun jrpc--call-function (func args)
-  ;; Check if the function is callable is close to calling the function as
+  "Execute the remote procedure call for `func' with `args'.
+
+An error will be raised if the function does not exist (or has
+not been exposed.)"
+  ;; Check if the function is callable as close to calling the function as
   ;; possible.
   (unless (member func jrpc-exposed-functions)
     (jrpc--raise-procedural-error
