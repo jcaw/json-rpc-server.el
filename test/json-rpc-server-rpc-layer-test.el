@@ -9,70 +9,88 @@
 ;; Unit tests
 (progn
   ;; TODO: Find how to organize Elisp tests hierarchically.
-  (ert-deftest test-jrpc--request-from-json ()
-    "Test function for `jrpc--request-from-json'.
+  (ert-deftest test-jrpc--validate-request ()
+    "Test for `jrpc--validate-request'.
 
-Test whether it decodes request json properly, and raises the
-correct errors for flawed json.
+Test whether it accepts good requests, and raises the
+correct errors for flawed requests.
 
-This test doesn't thoroughly test the validity of the json. That
-is handled in the unit test for the json decoder itself.
-
-Note that when testing for raised errors, it doesn't test error messages - it just tests the class of the signal."
+Note that when testing for raised errors, it doesn't test error
+messages - it just tests the class of the signal."
     ;; Valid request, all fields filled.
-    (should (jrpc--structs-equal
-             (jrpc--request-from-json "{\"jsonrpc\": \"2.0\",\"method\": \"message\",\"params\": [\"This is a %s\", \"test message\"],\"id\": 12456,}")
-             (make-jrpc-request :jsonrpc "2.0"
-                                :method "message"
-                                :params '("this is a %s" "test message")
-                                :id 12456)))
+    ;;
+    ;; We also use this test to ensure the request is returned.
+    (let ((request '((jsonrpc . "2.0")
+                     (method . "message")
+                     (params . ("This is a %s"
+                                "test message"))
+                     (id . 12456))))
+      (should (equal (jrpc--validate-request request)
+                     request)))
     ;; Valid request, but it's jsonrpc 1.0
-    (should (jrpc--structs-equal
-             (jrpc--request-from-json
-              "{\"method\": \"message\",\"params\": [\"This is a %s\", \"test message\"],\"id\": 12456,}")
-             (make-jrpc-request :jsonrpc nil
-                                :method "message"
-                                :params '("this is a %s" "test message")
-                                :id 12456)))
+    (should (jrpc--validate-request
+             '((method . "message")
+               (params . ("This is a %s"
+                          "test message"))
+               (id . 12456))))
     ;; Valid request, but there's no params.
-    (should (jrpc--structs-equal
-             (jrpc--request-from-json "{\"jsonrpc\": \"2.0\",\"method\": \"message\",\"id\": 12456,}")
-             (make-jrpc-request :jsonrpc "2.0"
-                                :method "message"
-                                :params '()
-                                :id 12456)))
+    (should (jrpc--validate-request
+             '((jsonrpc . "2.0")
+               (method . "message")
+               (id . 12456))))
 
     ;; Invalid `jsonrpc' param
     (progn
       ;; jsonrpc is 3.0 - too high
-      (should-error (jrpc--request-from-json "{\"jsonrpc\": \"3.0\",\"method\": \"message\",\"id\": 12456,}")
+      (should-error (jrpc--validate-request
+                     '((jsonrpc . "3.0")
+                       (method . "message")
+                       (id . 12456)))
                     :type 'jrpc-invalid-request)
-      ;; jsonrpc is 2 -- formatted wrong
-      (should-error (jrpc--request-from-json "{\"jsonrpc\": \"2\",\"method\": \"message\",\"id\": 12456,}")
+      ;; jsonrpc is 2 - formatted wrong
+      (should-error (jrpc--validate-request
+                     '((jsonrpc . "2")
+                       (method . "message")
+                       (id . 12456)))
                     :type 'jrpc-invalid-request))
 
     ;; Invalid `method' param
     (progn
       ;; No method
-      (should-error (jrpc--request-from-json "{\"jsonrpc\": \"2.0\",\"id\": 12456,}")
+      (should-error (jrpc--validate-request
+                     '((jsonrpc . "2.0")
+                       (id . 12456)))
                     :type 'jrpc-invalid-request)
       ;; Wrong type for method
-      (should-error (jrpc--request-from-json "{\"jsonrpc\": \"2.0\",\"method\": 120983,\"id\": 12456,}")
+      (should-error (jrpc--validate-request
+                     '((jsonrpc . "2.0")
+                       (method . 120983)
+                       (id . 12456)))
                     :type 'jrpc-invalid-request))
 
     ;; Invalid `params' param
     (progn
-      (should-error (jrpc--request-from-json "{\"jsonrpc\": \"2.0\",\"method\": \"message\",\"params\": \"Just a string param\",\"id\": 12456,}")
+      (should-error (jrpc--validate-request
+                     '((jsonrpc . "2.0")
+                       (method . "message")
+                       (params . "Just a string param")
+                       (id . 12456)))
                     :type 'jrpc-invalid-request))
 
     ;; Invalid `id' param
     (progn
       ;; No id
-      (should-error (jrpc--request-from-json "{\"jsonrpc\": \"2.0\",\"method\": \"message\",}")
+      (should-error (jrpc--validate-request
+                     '((jsonrpc . "2.0")
+                       (method . "message")))
                     :type 'jrpc-invalid-request)
       ;; Invalid id type - in this case, a string.
-      (should-error (jrpc--request-from-json "{\"jsonrpc\": \"2.0\",\"method\": \"message\",\"id\": \"12456\",}")
-                    :type 'jrpc-invalid-request)))
+      (should-error (jrpc--validate-request
+                     '((jsonrpc . "2.0")
+                       (method . "message")
+                       (id . "12456")))
+                    :type 'jrpc-invalid-request))
+    )
 
   (ert-deftest test-jrpc--decode-request-json ()
     "Test for `jrpc--decode-request-json'.
@@ -104,7 +122,17 @@ only tests the additional conditions imposed by the
     (should-error (jrpc--decode-request-json
                    ;; Some malformed JSON input.
                    "als;d'asfoasf")
-                  :type 'jrpc-invalid-request-json))
+                  :type 'jrpc-invalid-request-json)
+
+    ;; Try decoding a full request
+    (should (equal
+             (jrpc--decode-request-json "{\"jsonrpc\": \"2.0\",\"method\": \"message\",\"params\": [\"This is a %s\", \"test message\"],\"id\": 12456,}")
+             '((jsonrpc . "2.0")
+               (method . "message")
+               (params . ("This is a %s"
+                          "test message"))
+               (id . 12456))))
+    )
 
   (ert-deftest test-jrpc--execute-request ()
     "Test for `jrpc--execute-request'.
