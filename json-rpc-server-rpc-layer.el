@@ -293,6 +293,9 @@ not been exposed.)"
 (defun jrpc--verify-request (request-alist)
   "Verify that a decoded request has the correct structure.
 
+The request should be provided in the form of an alist.
+`REQUEST-ALIST' is the request.
+
 Relevant errors will be raised if the request is invalid."
   (when (jrpc-null-p request-alist)
     (jrpc--raise-procedural-error
