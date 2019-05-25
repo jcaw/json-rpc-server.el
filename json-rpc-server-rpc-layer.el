@@ -388,6 +388,8 @@ converted into a JSON-RPC response with
     (condition-case err
         (json-read-from-string json)
       (error
+       ;; Catch JSON errors and raise a jrpc error that can be more easily
+       ;; understood.
        (jrpc--raise-procedural-error
         'jrpc-invalid-request-json
         "There was an error decoding the request's JSON."
