@@ -3,6 +3,9 @@
 ;; Package that allows external JSON-RPC calls to Emacs.
 
 
+;;; Code:
+
+
 (require 'json)
 
 
