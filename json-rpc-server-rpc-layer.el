@@ -434,6 +434,19 @@ Usage example:
 
 
 (defun jrpc--encode-error-response (jrpc-error &optional id)
+  "Encode a `jrpc-procedural-error' into a JSON-RPC 2.0 error response.
+
+The result will be a JSON-RPC 2.0 response string, containing
+information about the error.
+
+`JRPC-ERROR' is assumed to be the error raised during the
+processing of a JSON-RPC request. It needs to be a subclass of
+`jrpc-procedural-error', raised with
+`jrpc--raise-procedural-error', to ensure it has the information
+and structure necessary to encode it into a response.
+
+`ID' should be the id of the original request. Extracting an id
+is not always possible, so this parameter is optional."
   (let* ((original-error-data (cdr jrpc-error))
          (error-message (alist-get 'message original-error-data))
          (error-code (alist-get 'json-rpc-error-code original-error-data))
