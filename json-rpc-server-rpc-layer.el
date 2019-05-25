@@ -433,7 +433,7 @@ Usage example:
              "This string was inserted instead."))))
 
 
-(defun jrpc--encode-error-response (jrpc-error id)
+(defun jrpc--encode-error-response (jrpc-error &optional id)
   (let* ((original-error-data (cdr jrpc-error))
          (error-message (alist-get 'message original-error-data))
          (error-code (alist-get 'json-rpc-error-code original-error-data))
