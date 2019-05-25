@@ -311,12 +311,11 @@ not been exposed.)"
     (jrpc--call-function method-symbol args)))
 
 
-(defun jrpc--request-from-json (json)
-  "Decode a request from `JSON' into a `jrpc-request'.
+(defun jrpc--verify-request (request-alist)
+  "Verify that a decoded request has the correct structure.
 
 Relevant errors will be raised if the request is invalid."
-  (let* ((request-alist (jrpc--decode-request-json json))
-         (jsonrpc       (alist-get 'jsonrpc request-alist))
+  (let* ((jsonrpc       (alist-get 'jsonrpc request-alist))
          (method        (alist-get 'method  request-alist))
          (params        (alist-get 'params  request-alist))
          (id            (alist-get 'id      request-alist))
@@ -472,18 +471,26 @@ response can be synchronized to it."
                                :id id))))
 
 
-(defun jrpc--decode-id (request-in-json)
-  "Attempt to decode the ID and NOTHING ELSE.
+(defun jrpc--extract-id (decoded-request)
+  "Attempt to extract the ID from a decoded request and NOTHING ELSE.
 
-If no ID could be decoded, returns nil.
+If no ID could be extracted, returns nil.
 
 This method will not raise errors."
   (ignore-errors
-    (let ((id (alist-get
-             'id
-             (jrpc--decode-request-json request-in-json))))
-    (when (integerp id)
-      id))))
+    (let ((id (alist-get 'id decoded-request)))
+      (when (integerp id)
+        id))))
+
+
+(defun jrpc--decode-id (request-in-json)
+  "Attempt to decode the id from a JSON request and NOTHING ELSE.
+
+If no id could be decoded, returns nil.
+
+This method will not raise errors."
+  (ignore-errors
+    (jrpc--extract-id (jrpc--decode-request-json request-in-json))))
 
 
 (defun jrpc-unknown-error-response (&optional request-in-json)
@@ -546,18 +553,12 @@ response."
      id)))
 
 
-(defun jrpc-handle (request-in-json)
-  "Handle a JSON-RPC request.
+(defun jrpc--handle-single (decoded-request)
+  "Handle a single JSON-RPC request.
 
 The request should be encoded in `JSON'.
 
-Returns the JSON-RPC response, encoded in JSON, as a string.
-
-This is the main entry point into the RPC layer. This is the
-method that decodes the RPC request and executes it. This method
-is transport-agnostic - transport has to be implemented
-separately."
-  ;; TODO: Handle batch objects too.
+Returns the JSON-RPC response, encoded in JSON."
   (let (
         ;; We attempt to decode the id using a robust method, to give us the
         ;; maximum chance of being able to include it in the response if there is
@@ -565,17 +566,75 @@ separately."
         ;;
         ;; This may still fail - that's OK. We just want to maximize the chance
         ;; of extracting it.
-        (id (jrpc--decode-id request-in-json))
+        (id (jrpc--extract-id decoded-request))
         )
     (condition-case err
         (jrpc--encode-result-response
          (jrpc--execute-request
-          (jrpc--request-from-json request-in-json))
+          (jrpc--verify-request decoded-request))
          id)
       (jrpc-procedural-error
        (jrpc--encode-error-response err id))
-      ;; TODO: How to handle unaccounted for errors?
+      ;; (error
+      ;;  jrpc--encode-unknown-error-response err id)
       )))
+
+
+(defun jrpc-handle (request-in-json)
+  "Handle a JSON-RPC request.
+
+The request should be encoded in `JSON'.
+
+Returns the JSON-RPC response, encoded in JSON, as a string.
+
+This method can take either a single request, or a list of
+requests, per the JSON-RPC 2.0 specification.
+
+This is the main entry point into the RPC layer. This is the
+method that decodes the RPC request and executes it. This method
+is transport-agnostic - transport has to be implemented
+separately.
+
+Please note that this implementation deviates slightly from the
+JSON-RPC 2.0 specification:
+
+  1. Notifications are not supported. All RPC requests will
+     receive a response. Notifications may be implemented above
+     this layer, at the transport level.
+
+  2. Batch requests are not processed concurrently. Batch
+     requests will always be processed in the order they are
+     supplied. Responses will be supplied in the same order."
+  (condition-case err
+      ;; Per JSON-RPC 2.0 specification, requests can either be single requests
+      ;; or a list of requests. We have to handle the request differently
+      ;; depending on which it is, so we have to decode it here.
+      (let* ((decoded-request (jrpc--decode-request-json request-in-json))
+             ;; Because JSON objects (dictionaries) will be decoded into alists,
+             ;; we can't assume any list is a batch requests. Single requests
+             ;; will also look like lists. Instead, ensure the request is a list
+             ;; *and* not a dictionary.
+             ;;
+             ;; If the request is an empty list (or null), we just process it
+             ;; like a normal request.
+             (is-batch-request (and (not (jrpc-null-p decoded-request))
+                                    (listp decoded-request)
+                                    (not (json-alist-p decoded-request)))))
+        (if is-batch-request
+            ;; Process each request in turn; Return an array of each process'
+            ;; result, as a string.
+            ;;
+            ;; HACK: Because each request returns a JSON-encoded response, we
+            ;; have to decode them before joining them together.
+            (json-encode
+             (mapcar 'json-read-from-string
+                     (mapcar 'jrpc--handle-single decoded-request)))
+          (jrpc--handle-single decoded-request)))
+    (jrpc-procedural-error
+     (jrpc--encode-error-response err nil))
+    ;; (error
+    ;;  (jrpc--encode-unknown-error-response err nil))
+    ))
 
 
 (defun jrpc-expose-function (func)
