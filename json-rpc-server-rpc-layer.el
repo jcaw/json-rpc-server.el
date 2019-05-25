@@ -597,17 +597,18 @@ Returns the JSON-RPC response, encoded in JSON."
 (defun jrpc-handle (request-in-json)
   "Handle a JSON-RPC request.
 
-The request should be encoded in `JSON'.
+`REQUEST-IN-JSON' should be a JSON-RPC (up to 2.0) request,
+encoded in a JSON string.
 
-Returns the JSON-RPC response, encoded in JSON, as a string.
-
-This method can take either a single request, or a list of
-requests, per the JSON-RPC 2.0 specification.
+Returns the JSON-RPC 2.0 response, encoded in a JSON string.
 
 This is the main entry point into the RPC layer. This is the
 method that decodes the RPC request and executes it. This method
 is transport-agnostic - transport has to be implemented
 separately.
+
+This method can take either a single encoded request, or an
+encoded list of requests, per the JSON-RPC 2.0 specification.
 
 Please note that this implementation deviates slightly from the
 JSON-RPC 2.0 specification:
