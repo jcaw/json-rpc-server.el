@@ -262,11 +262,15 @@ not been exposed.)"
       "Function has not been exposed (it may or may not exist). Cannot "
       "execute. Please expose this function with `jrpc-expose-function' "
       "if you want to call it remotely.")))
-  ;; TODO: Check if function is callable too. It could be exposed, but not
-  ;; exist.
-  ;;
+  (unless (functionp func)
+    (jrpc--raise-procedural-error
+     'jrpc-invalid-function
+     "This symbol has been exposed, but it is not a function. Cannot call it."
+     ))
   ;; TODO: Check if function is callable with args. Can the function signature
   ;; be checked?
+  ;;
+  ;; TODO: Should we allow macro calls here too?
   (condition-case-unless-debug err
       (apply func args)
     (error
