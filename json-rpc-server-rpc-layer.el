@@ -235,7 +235,10 @@ list is equivalent to nil, so the empty list counts as nil."
 
 
 (defun jrpc-alist-get (key alist)
-  "List alist-get, but works with string keys."
+  "Like `alist-get', but works with string keys.
+
+`KEY' is the key to query.
+`ALIST' is the alist to search."
   (let ((pair (assoc key alist)))
     (and pair
          (eq (type-of pair) 'cons)
