@@ -7,6 +7,7 @@
 
 
 (require 'json)
+(require 'cl-lib)
 
 
 (defvar jrpc-exposed-functions '()
