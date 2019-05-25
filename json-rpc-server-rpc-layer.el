@@ -94,19 +94,6 @@ will not be executed.")
   "Error code to be used for unknown errors.")
 
 
-(cl-defstruct jrpc-request
-  "Object representing a JSON-RPC request.
-
-This represents a request as laid out in the JSON-RPC 2.0
-specification.
-
-https://www.jsonrpc.org/specification"
-  jsonrpc
-  method
-  (params '())
-  id)
-
-
 (cl-defstruct jrpc-error-for-response
   "Object representing a JSON-RPC response's error.
 
@@ -283,16 +270,8 @@ not been exposed.)"
 (defun jrpc--execute-request (request)
   "Execute a remote procedure call.
 
-`REQUEST' should be a `jrpc-request' object."
-  (unless (eq (type-of request)
-              'jrpc-request)
-    ;; This should never be reached from outside the package. `request' will
-    ;; always be passed as a `jrpc-request' object. But include it, just in
-    ;; case.
-    (jrpc--raise-procedural-error
-     'jrpc-type-error
-     "`request' should be a `jrpc-request' object."))
-  (let* ((method-name (jrpc-request-method request))
+`REQUEST' should be an alist representing a JSON-RPC 2.0 request."
+  (let* ((method-name (alist-get 'method request))
          ;; Because we can only transport strings via JSON, the method name has
          ;; to be encoded as a string. That means we have to manually convert it
          ;; into a symbol before invocation.
@@ -307,7 +286,7 @@ not been exposed.)"
               (concat
                "`method` could not be converted to an Elisp symbol. It "
                "should be a string that converts into an elisp symbol.")))))
-         (args (jrpc-request-params request)))
+         (args (alist-get 'params request)))
     (jrpc--call-function method-symbol args)))
 
 
@@ -358,10 +337,7 @@ Relevant errors will be raised if the request is invalid."
     (unless (integerp id)
       (jrpc--raise-procedural-error
        'jrpc-invalid-request "`id` should be an integer."))
-    (make-jrpc-request :jsonrpc jsonrpc
-                       :method method
-                       :params params
-                       :id id)))
+    request-alist))
 
 
 (defun jrpc--decode-request-json (json)
