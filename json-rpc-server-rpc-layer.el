@@ -104,8 +104,8 @@ will not be executed.")
 Please note this is not an Emacs error. It's a collection of
 information *about* an error, as laid out in the JSON-RPC 2.0
 protocol, to be included as part of a JSON-RPC 2.0 response."
-  (code (:type int))
-  (message (:type string))
+  (code :type int)
+  (message :type string)
   (data nil))
 
 
@@ -113,7 +113,7 @@ protocol, to be included as part of a JSON-RPC 2.0 response."
                (:constructor nil)
                (:constructor make-jrpc-response-error
                              (&key
-                              (error (:type jrpc-error-for-response))
+                              (error :type jrpc-error-for-response)
                               id)
                              "Construct a JSON-RPC response for an error.")
                (:constructor make-jrpc-response-result
