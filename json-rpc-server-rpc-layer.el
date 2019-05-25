@@ -454,7 +454,7 @@ is not always possible, so this parameter is optional."
                                       original-error-data))
          ;; The additional data should be an alist of additional data keys to
          ;; their data.
-         (additional-data '()))
+         (additional-data nil))
     ;; Additional data should *only* have a value when additional data exists.
     ;; It should be null otherwise.
     (when underlying-error
