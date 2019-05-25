@@ -218,7 +218,7 @@ list is equivalent to nil, so the empty list counts as nil."
 
 
 (defun jrpc--string-to-int (string)
-  "Convert a string to an int. Return nil if it cannot be converted."
+  "Convert a `STRING' to an int. Return nil if it cannot be converted."
   (let ((number (ignore-errors
                   ;; Do not convert the empty string to converted to 0.
                   (and (not (jrpc-empty-string-p string))
