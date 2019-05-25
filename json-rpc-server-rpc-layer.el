@@ -498,7 +498,10 @@ decoded from JSON into an alist form."
 
 If no id could be decoded, returns nil.
 
-This method will not raise errors."
+This method will not raise errors.
+
+`REQUEST-IN-JSON' should be a JSON-RPC request (up to 2.0) in
+JSON form."
   (ignore-errors
     (jrpc--extract-id (jrpc--decode-request-json request-in-json))))
 
