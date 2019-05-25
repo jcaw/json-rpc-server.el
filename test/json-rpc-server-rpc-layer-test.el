@@ -122,26 +122,19 @@ for that function."
     (cl-letf (((symbol-function 'jrpc--call-function)
                'jrpc--call-function-patch))
       ;; Check it executes okay with a simple method call
-      (jrpc--execute-request (make-jrpc-request
-                              :method "message"
-                              :params '("this is a %s message" "test")
-                              :id 1))
+      (jrpc--execute-request '((method . "message")
+                               (params . ("this is a %s message"
+                                          "test"))
+                               (id     . 1)))
       ;; Check it executes okay no arguments
-      (jrpc--execute-request (make-jrpc-request
-                              :method "message"
-                              :params nil
-                              :id 1)))
-
-    ;; Check it won't accept something other than a request
-    (should-error (jrpc--execute-request "a string")
-                  :type 'jrpc-type-error)
+      (jrpc--execute-request '((method . "message")
+                               (id     . 1))))
 
     ;; Temporarily expose `+' and ensure it executes correctly.
     (let ((jrpc-exposed-functions '(+)))
-      (should (= (jrpc--execute-request (make-jrpc-request
-                                         :method "+"
-                                         :params '(1 2 3)
-                                         :id 1))
+      (should (= (jrpc--execute-request '((method . "+")
+                                          (params . (1 2 3))
+                                          (id     . 1)))
                  6))))
 
 
