@@ -300,8 +300,8 @@ not been exposed.)"
     (jrpc--call-function method-symbol args)))
 
 
-(defun jrpc--verify-request (request-alist)
-  "Verify that a decoded request has the correct structure.
+(defun jrpc--validate-request (request-alist)
+  "Validate that a decoded request has the correct structure.
 
 The request should be provided in the form of an alist.
 `REQUEST-ALIST' is the request.
@@ -599,7 +599,7 @@ Returns the JSON-RPC response, encoded in JSON."
     (condition-case err
         (jrpc--encode-result-response
          (jrpc--execute-request
-          (jrpc--verify-request decoded-request))
+          (jrpc--validate-request decoded-request))
          id)
       (jrpc-procedural-error
        (jrpc--encode-error-response err id))
