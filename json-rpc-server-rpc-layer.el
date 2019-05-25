@@ -294,6 +294,12 @@ not been exposed.)"
   "Verify that a decoded request has the correct structure.
 
 Relevant errors will be raised if the request is invalid."
+  (when (jrpc-null-p request-alist)
+    (jrpc--raise-procedural-error
+     'jrpc-invalid-request "No request provided"))
+  (unless (json-alist-p request-alist)
+    (jrpc--raise-procedural-error
+     'jrpc-invalid-request "The request was not a JSON \"object\""))
   (let* ((jsonrpc       (alist-get 'jsonrpc request-alist))
          (method        (alist-get 'method  request-alist))
          (params        (alist-get 'params  request-alist))
