@@ -146,7 +146,10 @@ Also note that this response will *always* be tagged as JSON-RPC
 
 
 (defun jrpc--get-error-code (error-symbol)
-  "Get the JSON-RPC 2.0 specification error code for an error."
+  "Get the JSON-RPC 2.0 specification error code for an error.
+
+`ERROR-SYMBOL' should be a symbol representing the error. It
+should a subclass of `jrpc-procedural-error'."
   (interactive)
   (or (alist-get error-symbol jrpc--error-codes)
       jrpc--unknown-error-code))
