@@ -546,7 +546,7 @@ response."
   ;; Ensure `MESSAGE' is a string to ensure it encodes predictably (i.e. as a
   ;; string).
   (unless (stringp message)
-    (error "`message' must be a string."))
+    (error "%s" "`message' must be a string"))
   (let ((id (or (jrpc--decode-id request-in-json)
                 "null")))
     (format
