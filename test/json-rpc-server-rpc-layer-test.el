@@ -109,9 +109,12 @@ only tests the additional conditions imposed by the
   (ert-deftest test-jrpc--execute-request ()
     "Test for `jrpc--execute-request'.
 
-Note that this does not check the functionality of the underlying
-`jrpc--call-function' thoroughly. That is done in the unit test
-for that function."
+Note that this while this test does test a full function
+execution, it does not do so thoroughly. That is done in the unit
+test for the underlying function, `jrpc--call-function'.
+
+This test is primarily designed to check that the function is
+correctly parsed and sent into `jrpc--call-function'."
     (defun jrpc--call-function-patch (func args)
       "Patched `jrpc--call-function' that just checks the types of the arguments."
       (should (symbolp func))
