@@ -569,7 +569,8 @@ response."
 (defun jrpc--handle-single (decoded-request)
   "Handle a single JSON-RPC request.
 
-The request should be encoded in `JSON'.
+`DECODED-REQUEST' should be a JSON-RPC (up to 2.0) request,
+decoded into an alist.
 
 Returns the JSON-RPC response, encoded in JSON."
   (let (
