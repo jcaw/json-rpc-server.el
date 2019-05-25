@@ -444,14 +444,13 @@ Usage example:
          (additional-data '()))
     ;; Additional data should only have a value when additional data exists.
     (when underlying-error
-      (add-to-list
-       'additional-data
-       (cons 'underlying-error
-             ;; Errors may theoretically contain arbitrary
-             ;; data, so we have to sanitize it.
-             (jrpc--replace-unencodable-object
-              unerlying-error))
-       t))
+      (setq additional-data
+            (append additional-data
+            `((underlying-error
+               ;; Errors may theoretically contain arbitrary
+               ;; data, so we have to sanitize it.
+               ,(jrpc--replace-unencodable-object
+                 underlying-error))))))
     (json-encode
      (jrpc-response-to-alist
       (make-jrpc-response-error
