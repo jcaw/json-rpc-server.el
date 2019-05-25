@@ -360,6 +360,15 @@ Relevant errors will be raised if the request is invalid."
 
 
 (defun jrpc--decode-request-json (json)
+  "Decode JSON with custom rules and error handling.
+
+Arrays will be decoded into lists, objects (dictionaries) will be
+decoded into alists, and keys will be decoded into symbols.
+
+If there is an error parsing the JSON, a
+`jrpc-invalid-request-json' error will be raised. This can be
+converted into a JSON-RPC response with
+`jrpc--encode-error-response'."
   ;; Set some custom options for the JSON decoder.
   (let (
         ;; Arrays should be decoded as lists, because this is the array-like
