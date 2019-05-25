@@ -479,11 +479,14 @@ response can be synchronized to it."
 
 
 (defun jrpc--extract-id (decoded-request)
-  "Attempt to extract the ID from a decoded request and NOTHING ELSE.
+  "Attempt to extract the ID from a request alist and NOTHING ELSE.
 
 If no ID could be extracted, returns nil.
 
-This method will not raise errors."
+This method will not raise errors.
+
+`DECODED-REQUEST' should be a JSON-RPC request (up to 2.0),
+decoded from JSON into an alist form."
   (ignore-errors
     (let ((id (alist-get 'id decoded-request)))
       (when (integerp id)
