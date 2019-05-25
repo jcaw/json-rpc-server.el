@@ -246,7 +246,7 @@ list is equivalent to nil, so the empty list counts as nil."
 
 
 (defun jrpc--call-function (func args)
-  "Execute the remote procedure call for `func' with `args'.
+  "Execute the remote procedure call for `FUNC' with `ARGS'.
 
 An error will be raised if the function does not exist (or has
 not been exposed.)"
