@@ -408,6 +408,17 @@ the function is invoked."
                     ;; This error code corresponds to "method not found" in the
                     ;; JSON-RPC 2.0 specification.
                     -32601)))))
+
+  (ert-deftest test-full-procedure-call--empty-json ()
+    "Test a procedure call with empty JSON."
+    (let* ((response (json-read-from-string
+                      (jrpc-handle "{}")))
+           (response-error (alist-get 'error response)))
+      (should response)
+      (should (eq (alist-get 'code response-error)
+                  ;; This error code corresponds to "invalid request" in the
+                  ;; JSON-RPC 2.0 specification.
+                  -32600))))
   )
 
 
