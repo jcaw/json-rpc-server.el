@@ -1,3 +1,6 @@
+## Elisp Ignores
+## -------------
+
 # Compiled
 *.elc
 
@@ -9,3 +12,10 @@
 
 # Undo-tree save-files
 *.~undo-tree
+
+
+## Python Ignores
+## --------------
+*.ropeproject
+*__pycache__
+*.pyc
