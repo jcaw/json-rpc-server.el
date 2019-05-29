@@ -61,7 +61,8 @@ will not be executed.")
 
 (define-error 'jrpc-invalid-request-json
   ;; Error to be raised when the JSON in a supplied request is invalid.
-  "The request's JSON was invalid.")
+  "The request's JSON was invalid."
+  'jrpc-procedural-error)
 
 
 (define-error 'jrpc-invalid-params
