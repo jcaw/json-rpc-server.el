@@ -1,3 +1,16 @@
+(defvar jrpc--ews-test-directory
+  (file-name-directory (or load-file-name
+                           buffer-file-name))
+ "The location of the jrpc `emacs-web-server'-based transport layer's tests.")
+
+
+(push (expand-file-name  (concat jrpc--ews-test-directory "../../"))
+      load-path)
+
+
+(require 'json-rpc-server-ews-transport-layer)
+
+
 (defconst jrpc-transport-layer-test-dir
   (file-name-directory
    (or load-file-name buffer-file-name)))
