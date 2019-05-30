@@ -8,7 +8,9 @@
       load-path)
 
 
-(require 'json-rpc-server-ews-transport-layer)
+(load-file (concat jrpc--ews-test-directory
+                   "../../"
+                   "json-rpc-server-ews-transport-layer.el"))
 
 
 (defconst jrpc-transport-layer-test-dir
