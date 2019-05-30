@@ -152,10 +152,76 @@ use."
   )
 
 
+(defun jrpc--on-linux ()
+  "Is this instance of Emacs running on Linux?"
+  (eq system-type 'gnu/linux))
+
+
+(defun jrpc--on-windows ()
+  "Is this instance of Emacs running on Windows?"
+  (eq (system-type 'windows-nt)))
+
+
+(defun jrpc--on-mac ()
+  "Is this instance of Emacs running on MacOS?"
+  (eq (system-type 'darwin)))
+
+
+(defconst jrpc--port-number-filename-only
+  ".emacs-rpc-server-port")
+
+
+(defconst jrpc--port-number-temp-file
+  (cond ((or (jrpc--on-linux)
+             (jrpc--on-mac))
+         (substitute-in-file-name
+          (format "$HOME/%s" jrpc--port-number-filename-only)))
+        ((jrpc--on-windows)
+         (format "%s\\%s"
+                 (or (getenv "USERPROFILE")
+                     (concat (getenv "HOMEDRIVE")
+                             (getenv "HOMEPATH")))
+                 jrpc--port-number-filename-only))
+        (t nil))
+  "Temporary file used to communicate the port number to clients.")
+
+
+(defun jrpc--publish-port (port)
+  "Write the server's port number to a temporary file.
+
+This file is used so clients can determine which port the server
+was dynamically allocated at creation. It is not necessary if a
+fixed port was used, but it can still be useful to reduce setup."
+  (unless jrpc--port-number-temp-file
+    (error "Port publishing not supported on this platform."))
+  ;; Make at least some effort to clean up the port file when Emacs is closed.
+  ;; This will only clean it up when `kill-emacs' is called, but it's better
+  ;; than nothing.
+  (add-hook 'kill-emacs-hook 'jrpc--erase-port-file)
+  (unwind-protect
+      (progn
+        (find-file jrpc--port-number-temp-file)
+        ;; Erase any existing port information.
+        (erase-buffer)
+        (insert (format "%s" port))
+        (write-file jrpc--port-number-temp-file)
+        (message (concat "JSON-RPC server port written to \"%s\". This file can "
+                         "be used by clients to determine the port to connect to.")
+                 jrpc--port-number-temp-file))
+    (kill-current-buffer)))
+
+
+(defun jrpc--erase-port-file ()
+  "Erase the port information file, if it exists."
+  (if (file-exists-p jrpc--port-number-temp-file)
+      (delete-file jrpc--port-number-temp-file nil)))
+
+
 (cl-defun jrpc-start-server (&key
                              (port "0")
                              username
-                             password)
+                             password
+                             (publish-port t))
   "Start a new JSON-RPC 2.0 server.
 
 JSON-RPC requests to the server should be sent in the body of
@@ -168,6 +234,16 @@ specification, although the server will also tolerate JSON-RPC
   The server will be allocated a random port when it is started.
   This will be printed to the message buffer. Use the keyword
   argument `:PORT' to specify a port to the server.
+
+  If the port is dynamically allocated, clients need to be able
+  to discover it. To achieve this, port information can be
+  written to a known file in the user's home dir. The flag
+  `:PUBLISH-PORT' controls whether this file is created or not.
+  By default, it is t, meaning the port information will be
+  published.
+
+  See the README for a full explanation of how to configure
+  clients.
 
 # Authentication
 
@@ -193,19 +269,32 @@ running."
          (if (or username password)
              (jrpc--ews-auth-handler username password)
            'jrpc--handle-ews-request)
-        port))
-  (message "JSON-RPC server running on port %s"
-           (jrpc--ws-server-port jrpc--server)))
+         port))
+  (add-hook 'kill-emacs-hook 'jrpc-stop-server)
+  (let ((port (jrpc--ws-server-port jrpc--server)))
+    (message "JSON-RPC server running on port %s" port)
+    (when publish-port
+     (jrpc--publish-port port))))
 
 
 (defun jrpc-stop-server ()
   "Stop the active JSON-RPC 2.0 server.
 
 This method will fail if no server is running."
+  ;; Erase the port file up front, just in case it exists when the server is
+  ;; down.
+  (jrpc--erase-port-file)
   (unless jrpc--server
     (error "Server not running."))
   (ws-stop jrpc--server)
   (setq jrpc--server nil))
+
+
+(defun jrpc--stop-server-safe (&rest _)
+  "Like `jrpc-stop-server', but this function will not raise errors.
+
+For example, it can safely be attached to the kill-emacs-hook."
+  (ignore-errors (jrpc-stop-server)))
 
 
 (provide 'json-rpc-server-ews-transport-layer)

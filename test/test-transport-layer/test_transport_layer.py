@@ -4,13 +4,46 @@
 from nose.tools import eq_
 from multiprocessing import Lock
 import requests
+import os
+import platform
 
 USERNAME = "test_username"
 PASSWORD = "test_password"
-TEST_PORT = 8006
 
 PROTOCOL = "http://"
 TEST_HOST = "localhost"
+
+system = platform.system()
+if system.lower() == "windows":
+    PORT_FILENAME = os.path.join((os.path.expandvars("%userprofile%")
+                                  or (os.path.expandvars("%homedrive%")
+                                     + os.path.expandvars("%homepath%"))),
+                                 ".emacs-rpc-server-port")
+elif system.lower() in ["linux", "mac"]:
+    PORT_FILENAME = os.path.expanduser("~/.emacs-rpc-server-port")
+else:
+    raise ValueError('Cannot test on this system: "{}"'.format(platform.system()))
+
+
+def _read_port_from_file():
+    """Read the server's current port number from the port file.
+
+    :returns: the server's current port number
+    :rtype: int
+
+    """
+    with open(PORT_FILENAME) as f:
+        port_as_string = f.read()
+    port_as_string = port_as_string.strip()
+    try:
+        return int(port_as_string)
+    except:
+        raise ValueError(
+            'Port file did not contain an integer. Was: "{}"'.format(
+                port_as_string))
+
+
+TEST_PORT = _read_port_from_file()
 
 TEST_ADDRESS = "{protocol}{host}:{port}".format(
     protocol=PROTOCOL, host=TEST_HOST, port=TEST_PORT

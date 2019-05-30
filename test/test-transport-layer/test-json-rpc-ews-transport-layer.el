@@ -18,7 +18,7 @@
    (or load-file-name buffer-file-name)))
 
 
-(defconst jrpc-transport-layer-test-port 8006)
+(defconst jrpc-transport-layer-test-port 0)
 
 
 (defun jrpc-stop-server-on-idle-timer ()
