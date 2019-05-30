@@ -54,5 +54,10 @@ configuration."
      "*transport layer nosetests*")))
 
 
+;; Tests will be run automatically when this buffer is evaluated directly.
+(when (not load-file-name)
+ (jrpc-run-transport-layer-tests))
+
+
 (provide 'test-json-rpc-ews-transport-layer)
 ;;; test-json-rpc-ews-transport-layer.el ends here
