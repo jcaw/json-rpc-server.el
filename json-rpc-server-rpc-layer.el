@@ -157,9 +157,9 @@ should a subclass of `jrpc-procedural-error'."
 
 
 (cl-defun jrpc--raise-procedural-error (error-symbol
-                                     message
-                                     &key
-                                     (original-error nil))
+                                        message
+                                        &key
+                                        (original-error nil))
   "Raise a subclass of `jrpc-procedural-error'.
 
 Subclasses of `jrpc-procedual-error' should not be raised
