@@ -688,5 +688,5 @@ This reverses `jrpc-expose-function'."
   (setq jrpc-exposed-functions (remove func jrpc-exposed-functions)))
 
 
-(provide 'json-rpc-server-rpc-layer)
-;;; json-rpc-server-rpc-layer.el ends here
+(provide 'json-rpc-server)
+;;; json-rpc-server.el ends here

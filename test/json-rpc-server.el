@@ -1,9 +1,9 @@
-;;; json-rpc-server-rpc-layer-test.el --- Tests for json-rpc-server
+;;; json-rpc-server-test.el --- Tests for json-rpc-server
 
 
 (require 'ert)
 
-(load-file "json-rpc-server-rpc-layer.el")
+(load-file "json-rpc-server.el")
 
 
 ;; Unit tests
@@ -422,4 +422,4 @@ the function is invoked."
   )
 
 
-;;; json-rpc-server-rpc-layer-test.el ends here
+;;; json-rpc-server-test.el ends here
