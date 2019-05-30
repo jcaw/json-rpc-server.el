@@ -9,10 +9,10 @@
 
 
 (define-error 'jrpc-http-error "An error occurred processing the HTTP request")
-(define-error 'jrpc-malformed-request
+(define-error 'jrpc-malformed-http-request
   "The request was malformed"
   'jrpc-http-error)
-(define-error 'jrpc-invalid-request
+(define-error 'jrpc-invalid-http-request
   "The request was invalid"
   'jrpc-http-error)
 
@@ -42,17 +42,17 @@ specific type. This is a hack to extract it manually."
                                       (jrpc--extract-header request :CONTENT-LENGTH)
                                     (error nil))))
       (when (eq nil content-length-string)
-        (signal 'jrpc-malformed-request
+        (signal 'jrpc-malformed-http-request
                 "No `Content-Length` parameter"))
       (let ((content-length (condition-case nil
                                 (string-to-number content-length-string)
                               (error nil)))
             (headers-end (string-match "\r\n\r\n" pending)))
         (unless (integerp content-length)
-          (signal 'jrpc-malformed-request
+          (signal 'jrpc-malformed-http-request
                   "`Content-Length` was not an integer."))
         (when (eq nil headers-end)
-          (signal 'jrpc-malformed-request
+          (signal 'jrpc-malformed-http-request
                   "No double line breaks found in POST request. Content not acceptable"))
         (let* (
                ;; Have to offset the content start. It will be four characters
@@ -62,7 +62,7 @@ specific type. This is a hack to extract it manually."
           (condition-case nil
               (substring pending content-start content-end)
             (error
-             (signal 'jrpc-malformed-request
+             (signal 'jrpc-malformed-http-request
                      "POST content was shorter than `Content-Length` parameter"))))))))
 
 
@@ -100,11 +100,11 @@ client with the result."
         (progn
           (let ((content-type context))
             (unless content-type
-              (signal 'jrpc-invalid-request (format "No `Content-Type` provided.")))
+              (signal 'jrpc-invalid-http-request (format "No `Content-Type` provided.")))
             (unless (jrpc--case-insensitive-comparison
                      (format "%s" content-type)
                      "application/json")
-              (signal 'jrpc-invalid-request
+              (signal 'jrpc-invalid-http-request
                       (format
                        "`Content-Type` should be application/json. Was: %s"
                        content-type))))
@@ -112,7 +112,7 @@ client with the result."
                  (jrpc-response (jrpc-handle content)))
             (ws-response-header process 200 '("Content-type" . "application/json"))
             (process-send-string process jrpc-response)))
-      ((jrpc-malformed-request jrpc-invalid-request)
+      ((jrpc-malformed-http-request jrpc-invalid-http-request)
        (jrpc--send-400 request (cdr err))))))
 
 
