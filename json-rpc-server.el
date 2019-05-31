@@ -335,7 +335,7 @@ Relevant errors will be raised if the request is invalid."
                "\"2.0\" exactly.")))
     (unless method
       (jrpc--raise-procedural-error
-       'jrpc-invalid-request "`method` was not provided.'"))
+       'jrpc-invalid-request "`method` was not provided."))
     ;; TODO: Perhaps ensure the function is not a `json-rpc-server' function?
     ;; E.g. disallow the `jrpc-' prefix? Perhaps not. Unlikely to be reliable.
     ;; User should simply never expose those functions.
