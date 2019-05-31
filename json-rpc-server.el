@@ -679,7 +679,7 @@ name). `FUNC' is the function symbol to expose."
   (add-to-list 'jrpc-exposed-functions func))
 
 
-(defun jrpc-hide-funtion (func)
+(defun jrpc-hide-function (func)
   "Hide a function from remote procedure calls.
 
 `FUNC' is the function symbol to hide.
