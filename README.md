@@ -23,7 +23,7 @@ response is returned.
 This package is designed sit underneath a transport layer. <b>No transport logic
 is included.</b> A separate transport layer needs to be used to communicate with
 external clients. Since JSON-RPC provides [no inbuilt
-mechanism](https://groups.google.com/forum/#!topic/json-rpc/PN462g49yL8) for
+mechanism](https://groups.google.com/d/msg/json-rpc/PN462g49yL8/DdMa93870_oJ) for
 authenticating requests, the transport layer should also handle authentication.
 
 The default transport layer uses the http protocol, and is available
