@@ -228,35 +228,18 @@ JSON only contains six datatypes. Thus, functions exposed by this protocol
 
 The datatypes are mapped as follows:
 
-| JSON Datatype            | Decodeded Elisp Datatype |
-| ---                      | ---                      |
-| string (keys)            | symbol                   |
-| string (everywhere else) | string                   |
-| number                   | integer or float         |
-| boolean                  | `t` or `:json-false`     |
-| null                     | nil                      |
-| object                   | alist (with symbol keys) |
-| array                    | list                     |
+| JSON Datatype             | JSON Examples             | Decodeded Elisp Datatype | Elisp Examples          |
+| ---                       | ---                       | ---                      | ---                     |
+| string                    | `"string"`                | string                   | `"string"`              |
+| [quoted string](#symbols) | `"'symbol"`, `":keyword"` | symbol                   | `'symbol`, `:keyword`   |
+| number                    | `21`, `3.14`              | integer or float         | `21`, `3.14`            |
+| boolean                   | `true`, `false`           | `t` or `:json-false`     | `t`, `:json-false`      |
+| null                      | `null`                    | `nil`                    | `nil`                   |
+| object                    | `{"Key": "Value"}`        | alist                    | `'(("Key" . "Value"))'` |
+| array                     | `[1, 2, 4, 7]`            | list                     | `'(1 2 4 7)`            |
 
-You may notice that keys are decoded differently to other strings. Here's what
-that means. This JSON:
-
-```json
-{
-    "first-key": "first-value",
-    "second-key": ["two", "values"],
-}
-```
-
-Will be decoded into this alist:
-
-```emacs-lisp
-'((first-key . "first-value")
-  (second-key . '("two" "values")))
-```
-
-Please note that empty JSON arrays will be translated into empty Elisp lists,
-which are the same as `nil`.
+You may notice that "quoted strings" are decoded differently to normal strings.
+See the [Symbols](#symbols) section for a full explanation.
 
 ### Other Types
 
