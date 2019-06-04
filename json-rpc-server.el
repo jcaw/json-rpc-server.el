@@ -514,12 +514,14 @@ is not always possible, so this parameter is optional."
     ;; It should be null otherwise.
     (when underlying-error
       (setq additional-data
-            (append additional-data
-            `((underlying-error
-               ;; Errors may theoretically contain arbitrary
-               ;; data, so we have to sanitize it.
-               ,(jrpc--replace-unencodable-object
-                 underlying-error))))))
+            (append
+             additional-data
+             ;; TODO: Should we handle weird error structures here? Can
+             ;; we always count on the underlying error having a `car'
+             ;; and a `cdr'?
+             `((underlying-error . ((type . ,(car underlying-error))
+                                    (data . ,(jrpc--replace-unencodable-object
+                                              (cdr underlying-error)))))))))
     (json-encode
      (jrpc-response-to-alist
       (make-jrpc-response-error
