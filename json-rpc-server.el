@@ -282,22 +282,26 @@ not been exposed.)"
   "Execute a remote procedure call.
 
 `REQUEST' should be an alist representing a JSON-RPC 2.0 request."
-  (let* ((method-name (alist-get 'method request))
+  (let* ((method-name (jrpc-alist-get "method" request))
          ;; Because we can only transport strings via JSON, the method name has
          ;; to be encoded as a string. That means we have to manually convert it
          ;; into a symbol before invocation.
          (method-symbol
-          ;; I don't know what kind of strings fail to convert to symbols, but
-          ;; add error handling just in case.
-          (condition-case nil
-              (intern method-name)
-            (error
-             (jrpc--raise-procedural-error
-              'jrpc-invalid-request
-              (concat
-               "`method` could not be converted to an Elisp symbol. It "
-               "should be a string that converts into an elisp symbol.")))))
-         (args (alist-get 'params request)))
+          ;; If the method-name was quoted, it will already have been converted
+          ;; to a symbol.
+          (if (symbolp method-name)
+              method-name
+            ;; I don't know what kind of strings fail to convert to symbols, but
+            ;; add error handling just in case.
+            (condition-case nil
+                (intern method-name)
+              (error
+               (jrpc--raise-procedural-error
+                'jrpc-invalid-request
+                (concat
+                 "`method` could not be converted to an Elisp symbol. It "
+                 "should be a string that converts into an elisp symbol."))))))
+         (args (jrpc-alist-get "params" request)))
     (jrpc--call-function method-symbol args)))
 
 
@@ -314,10 +318,10 @@ Relevant errors will be raised if the request is invalid."
   (unless (json-alist-p request-alist)
     (jrpc--raise-procedural-error
      'jrpc-invalid-request "The request was not a JSON \"object\""))
-  (let* ((jsonrpc       (alist-get 'jsonrpc request-alist))
-         (method        (alist-get 'method  request-alist))
-         (params        (alist-get 'params  request-alist))
-         (id            (alist-get 'id      request-alist))
+  (let* ((jsonrpc       (jrpc-alist-get "jsonrpc" request-alist))
+         (method        (jrpc-alist-get "method"  request-alist))
+         (params        (jrpc-alist-get "params"  request-alist))
+         (id            (jrpc-alist-get "id"      request-alist))
          ;; If there's no `jsonrpc' parameter, we assume this is probably a
          ;; jsonrpc 1.0 request.
          (appears-to-be-jsonrpc-v1 (jrpc-null-p jsonrpc))
@@ -384,7 +388,7 @@ converted into a JSON-RPC response with
         (json-object-type 'alist)
         ;; Keys should be symbols because alists keys should generally be
         ;; symbols, not strings.
-        (json-key-type 'symbol)
+        (json-key-type 'string)
         )
     (condition-case err
         (json-read-from-string json)
@@ -395,6 +399,50 @@ converted into a JSON-RPC response with
         'jrpc-invalid-request-json
         "There was an error decoding the request's JSON."
         :original-error err)))))
+
+
+(defun jrpc--replace-symbol-strings (object)
+  "Replace symbol-like strings with symbols.
+
+This is a hack that allows symbols (most importantly, keyword
+arguments) to be sent over the JSON-RPC protocol. It takes
+strings prefixed with a single \"'\" or \":\", and converts them
+into symbols. For example:
+
+  \"'some-name\" -> 'some-name
+
+  \":KEYWORD\" -> :KEYWORD
+
+Strings with more than one quote/colon won't be converted. For
+example:
+
+  \"'a quote'\" -> \"'a quote'\"
+
+This method replaces the symbols inline in the request structure. The structure itself will be modified.
+
+This is a recursive function. It will call itself. Ensure
+`max-lisp-eval-depth' is high enough to parse your JSON object."
+  (cond ((stringp object)
+         (cond ((string-match "^:[^:]+$" object)
+                ;; If there's an error interning the object, just pass back the
+                ;; original string.
+                (condition-case nil
+                    (intern object)
+                  (error object)))
+               ((string-match "^'[^']+$" object)
+                ;; If there's an error interning the object, just pass back the
+                ;; original string.
+                (condition-case nil
+                    ;; If it's prefixed with a quote, we have to shave off the quote
+                    ;; before interning.
+                    (intern (substring object 1))
+                  (error object)))
+               ;; It wasn't a symbol. Return the original string.
+               (t object)))
+        ((consp object)
+         (cons (jrpc--replace-symbol-strings (car object))
+               (jrpc--replace-symbol-strings (cdr object))))
+        (t object)))
 
 
 (defun jrpc--replace-unencodable-object (object)
@@ -503,7 +551,7 @@ This method will not raise errors.
 `DECODED-REQUEST' should be a JSON-RPC request (up to 2.0),
 decoded from JSON into an alist form."
   (ignore-errors
-    (let ((id (alist-get 'id decoded-request)))
+    (let ((id (jrpc-alist-get "id" decoded-request)))
       (when (integerp id)
         id))))
 
@@ -600,7 +648,8 @@ Returns the JSON-RPC response, encoded in JSON."
     (condition-case err
         (jrpc--encode-result-response
          (jrpc--execute-request
-          (jrpc--validate-request decoded-request))
+          (jrpc--replace-symbol-strings
+           (jrpc--validate-request decoded-request)))
          id)
       (jrpc-procedural-error
        (jrpc--encode-error-response err id))
