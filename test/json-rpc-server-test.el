@@ -20,75 +20,75 @@ messages - it just tests the class of the signal."
     ;; Valid request, all fields filled.
     ;;
     ;; We also use this test to ensure the request is returned.
-    (let ((request '((jsonrpc . "2.0")
-                     (method . "message")
-                     (params . ("This is a %s"
+    (let ((request '(("jsonrpc" . "2.0")
+                     ("method" . "message")
+                     ("params" . ("This is a %s"
                                 "test message"))
-                     (id . 12456))))
+                     ("id" . 12456))))
       (should (equal (jrpc--validate-request request)
                      request)))
     ;; Valid request, but it's jsonrpc 1.0
     (should (jrpc--validate-request
-             '((method . "message")
-               (params . ("This is a %s"
+             '(("method" . "message")
+               ("params" . ("This is a %s"
                           "test message"))
-               (id . 12456))))
+               ("id" . 12456))))
     ;; Valid request, but there's no params.
     (should (jrpc--validate-request
-             '((jsonrpc . "2.0")
-               (method . "message")
-               (id . 12456))))
+             '(("jsonrpc" . "2.0")
+               ("method" . "message")
+               ("id" . 12456))))
 
     ;; Invalid `jsonrpc' param
     (progn
       ;; jsonrpc is 3.0 - too high
       (should-error (jrpc--validate-request
-                     '((jsonrpc . "3.0")
-                       (method . "message")
-                       (id . 12456)))
+                     '(("jsonrpc" . "3.0")
+                       ("method" . "message")
+                       ("id" . 12456)))
                     :type 'jrpc-invalid-request)
       ;; jsonrpc is 2 - formatted wrong
       (should-error (jrpc--validate-request
-                     '((jsonrpc . "2")
-                       (method . "message")
-                       (id . 12456)))
+                     '(("jsonrpc" . "2")
+                       ("method" . "message")
+                       ("id" . 12456)))
                     :type 'jrpc-invalid-request))
 
     ;; Invalid `method' param
     (progn
       ;; No method
       (should-error (jrpc--validate-request
-                     '((jsonrpc . "2.0")
-                       (id . 12456)))
+                     '(("jsonrpc" . "2.0")
+                       ("id" . 12456)))
                     :type 'jrpc-invalid-request)
       ;; Wrong type for method
       (should-error (jrpc--validate-request
-                     '((jsonrpc . "2.0")
-                       (method . 120983)
-                       (id . 12456)))
+                     '(("jsonrpc" . "2.0")
+                       ("method" . 120983)
+                       ("id" . 12456)))
                     :type 'jrpc-invalid-request))
 
     ;; Invalid `params' param
     (progn
       (should-error (jrpc--validate-request
-                     '((jsonrpc . "2.0")
-                       (method . "message")
-                       (params . "Just a string param")
-                       (id . 12456)))
+                     '(("jsonrpc" . "2.0")
+                       ("method" . "message")
+                       ("params" . "Just a string param")
+                       ("id" . 12456)))
                     :type 'jrpc-invalid-request))
 
     ;; Invalid `id' param
     (progn
       ;; No id
       (should-error (jrpc--validate-request
-                     '((jsonrpc . "2.0")
-                       (method . "message")))
+                     '(("jsonrpc" . "2.0")
+                       ("method" . "message")))
                     :type 'jrpc-invalid-request)
       ;; Invalid id type - in this case, a string.
       (should-error (jrpc--validate-request
-                     '((jsonrpc . "2.0")
-                       (method . "message")
-                       (id . "12456")))
+                     '(("jsonrpc" . "2.0")
+                       ("method" . "message")
+                       ("id" . "12456")))
                     :type 'jrpc-invalid-request))
     )
 
@@ -112,11 +112,12 @@ only tests the additional conditions imposed by the
 
     ;; Index and object decoding.
     ;;
-    ;; Indexes should be symbols, and the result should be an alist.
+    ;; Indexes should be strings, not symbols, and the result should be an
+    ;; alist.
     (should (equal (jrpc--decode-request-json
                     "{\"index1\": \"value1\", \"index2\": \"value2\"}")
-                   '((index1 . "value1")
-                     (index2 . "value2"))))
+                   '(("index1" . "value1")
+                     ("index2" . "value2"))))
 
     ;; Malformed json should raise a specific error, so it can be caught.
     (should-error (jrpc--decode-request-json
@@ -127,11 +128,11 @@ only tests the additional conditions imposed by the
     ;; Try decoding a full request
     (should (equal
              (jrpc--decode-request-json "{\"jsonrpc\": \"2.0\",\"method\": \"message\",\"params\": [\"This is a %s\", \"test message\"],\"id\": 12456,}")
-             '((jsonrpc . "2.0")
-               (method . "message")
-               (params . ("This is a %s"
+             '(("jsonrpc" . "2.0")
+               ("method" . "message")
+               ("params" . ("This is a %s"
                           "test message"))
-               (id . 12456))))
+               ("id" . 12456))))
     )
 
   (ert-deftest test-jrpc--execute-request ()
@@ -153,19 +154,19 @@ correctly parsed and sent into `jrpc--call-function'."
     (cl-letf (((symbol-function 'jrpc--call-function)
                'jrpc--call-function-patch))
       ;; Check it executes okay with a simple method call
-      (jrpc--execute-request '((method . "message")
-                               (params . ("this is a %s message"
+      (jrpc--execute-request '(("method" . "message")
+                               ("params" . ("this is a %s message"
                                           "test"))
-                               (id     . 1)))
+                               ("id"     . 1)))
       ;; Check it executes okay no arguments
-      (jrpc--execute-request '((method . "message")
-                               (id     . 1))))
+      (jrpc--execute-request '(("method" . "message")
+                               ("id"     . 1))))
 
     ;; Temporarily expose `+' and ensure it executes correctly.
     (let ((jrpc-exposed-functions '(+)))
-      (should (= (jrpc--execute-request '((method . "+")
-                                          (params . (1 2 3))
-                                          (id     . 1)))
+      (should (= (jrpc--execute-request '(("method" . "+")
+                                          ("params" . (1 2 3))
+                                          ("id"     . 1)))
                  6))))
 
 

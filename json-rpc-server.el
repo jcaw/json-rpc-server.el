@@ -282,7 +282,7 @@ not been exposed.)"
   "Execute a remote procedure call.
 
 `REQUEST' should be an alist representing a JSON-RPC 2.0 request."
-  (let* ((method-name (alist-get 'method request))
+  (let* ((method-name (jrpc-alist-get "method" request))
          ;; Because we can only transport strings via JSON, the method name has
          ;; to be encoded as a string. That means we have to manually convert it
          ;; into a symbol before invocation.
@@ -301,7 +301,7 @@ not been exposed.)"
                 (concat
                  "`method` could not be converted to an Elisp symbol. It "
                  "should be a string that converts into an elisp symbol."))))))
-         (args (alist-get 'params request)))
+         (args (jrpc-alist-get "params" request)))
     (jrpc--call-function method-symbol args)))
 
 
@@ -318,10 +318,10 @@ Relevant errors will be raised if the request is invalid."
   (unless (json-alist-p request-alist)
     (jrpc--raise-procedural-error
      'jrpc-invalid-request "The request was not a JSON \"object\""))
-  (let* ((jsonrpc       (alist-get 'jsonrpc request-alist))
-         (method        (alist-get 'method  request-alist))
-         (params        (alist-get 'params  request-alist))
-         (id            (alist-get 'id      request-alist))
+  (let* ((jsonrpc       (jrpc-alist-get "jsonrpc" request-alist))
+         (method        (jrpc-alist-get "method"  request-alist))
+         (params        (jrpc-alist-get "params"  request-alist))
+         (id            (jrpc-alist-get "id"      request-alist))
          ;; If there's no `jsonrpc' parameter, we assume this is probably a
          ;; jsonrpc 1.0 request.
          (appears-to-be-jsonrpc-v1 (jrpc-null-p jsonrpc))
@@ -388,7 +388,7 @@ converted into a JSON-RPC response with
         (json-object-type 'alist)
         ;; Keys should be symbols because alists keys should generally be
         ;; symbols, not strings.
-        (json-key-type 'symbol)
+        (json-key-type 'string)
         )
     (condition-case err
         (json-read-from-string json)
@@ -551,7 +551,7 @@ This method will not raise errors.
 `DECODED-REQUEST' should be a JSON-RPC request (up to 2.0),
 decoded from JSON into an alist form."
   (ignore-errors
-    (let ((id (alist-get 'id decoded-request)))
+    (let ((id (jrpc-alist-get "id" decoded-request)))
       (when (integerp id)
         id))))
 
