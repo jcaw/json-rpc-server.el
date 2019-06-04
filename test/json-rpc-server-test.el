@@ -23,7 +23,7 @@ messages - it just tests the class of the signal."
     (let ((request '(("jsonrpc" . "2.0")
                      ("method" . "message")
                      ("params" . ("This is a %s"
-                                "test message"))
+                                  "test message"))
                      ("id" . 12456))))
       (should (equal (jrpc--validate-request request)
                      request)))
@@ -31,7 +31,7 @@ messages - it just tests the class of the signal."
     (should (jrpc--validate-request
              '(("method" . "message")
                ("params" . ("This is a %s"
-                          "test message"))
+                            "test message"))
                ("id" . 12456))))
     ;; Valid request, but there's no params.
     (should (jrpc--validate-request
@@ -131,7 +131,7 @@ only tests the additional conditions imposed by the
              '(("jsonrpc" . "2.0")
                ("method" . "message")
                ("params" . ("This is a %s"
-                          "test message"))
+                            "test message"))
                ("id" . 12456))))
     )
 
@@ -156,18 +156,20 @@ correctly parsed and sent into `jrpc--call-function'."
       ;; Check it executes okay with a simple method call
       (jrpc--execute-request '(("method" . "message")
                                ("params" . ("this is a %s message"
-                                          "test"))
-                               ("id"     . 1)))
+                                            "test"))
+                               ("id"     . 1))
+                             '(message))
       ;; Check it executes okay no arguments
       (jrpc--execute-request '(("method" . "message")
-                               ("id"     . 1))))
+                               ("id"     . 1))
+                             '(message)))
 
-    ;; Temporarily expose `+' and ensure it executes correctly.
-    (let ((jrpc-exposed-functions '(+)))
-      (should (= (jrpc--execute-request '(("method" . "+")
-                                          ("params" . (1 2 3))
-                                          ("id"     . 1)))
-                 6))))
+    ;; Ensure it executes correctly.
+    (should (= (jrpc--execute-request '(("method" . "+")
+                                        ("params" . (1 2 3))
+                                        ("id"     . 1))
+                                      '(+))
+               6)))
 
 
   (ert-deftest test-jrpc-internal-error-response ()
@@ -350,38 +352,37 @@ symbols correctly."
 
 Note that `+' is a command that doesn't change the editor's
 state. Thus this checks a limited type of functionality."
-    ;; Temporarily expose "+"
-    (let ((jrpc-exposed-functions '(+)))
-      ;; Get the response first, then progressively check each part of its
-      ;; contents.
-      (let ((response (json-read-from-string
-                       (jrpc-handle
-                        (json-encode
-                         '(("jsonrpc" . "2.0")
-                           ("method"  . "+")
-                           ("params"  . [1 2 3])
-                           ("id"      . 21145)))))))
-        ;; Check each component, *then* check the full structure. We do this to
-        ;; make it easier to pinpoint why the test is failing.
-        (should (equal (alist-get 'jsonrpc response)
-                       "2.0"))
-        (should (eq (alist-get 'result response)
-                    6))
-        ;; The JSON-RPC 2.0 specification indicates that, on a successful
-        ;; response, the `error' parameter should not be present in the response
-        ;; at all. It cannot simply be null - it should not be there.
-        (should (eq (assoc 'error response)
-                    nil))
-        (should (eq (alist-get 'id response)
-                    21145))
-        ;; Since Elisp has no reliable way of comparing alists with the same
-        ;; elements in different orders, this is sensitive to the *order* of the
-        ;; JSON object returned. The test will fail if the order changes. Not
-        ;; perfect.
-        (should (cl-equalp response
-                           '((jsonrpc . "2.0")
-                             (result  . 6)
-                             (id      . 21145))))))
+    ;; Get the response first, then progressively check each part of its
+    ;; contents.
+    (let ((response (json-read-from-string
+                     (jrpc-handle
+                      (json-encode
+                       '(("jsonrpc" . "2.0")
+                         ("method"  . "+")
+                         ("params"  . [1 2 3])
+                         ("id"      . 21145)))
+                      '(+)))))
+      ;; Check each component, *then* check the full structure. We do this to
+      ;; make it easier to pinpoint why the test is failing.
+      (should (equal (alist-get 'jsonrpc response)
+                     "2.0"))
+      (should (eq (alist-get 'result response)
+                  6))
+      ;; The JSON-RPC 2.0 specification indicates that, on a successful
+      ;; response, the `error' parameter should not be present in the response
+      ;; at all. It cannot simply be null - it should not be there.
+      (should (eq (assoc 'error response)
+                  nil))
+      (should (eq (alist-get 'id response)
+                  21145))
+      ;; Since Elisp has no reliable way of comparing alists with the same
+      ;; elements in different orders, this is sensitive to the *order* of the
+      ;; JSON object returned. The test will fail if the order changes. Not
+      ;; perfect.
+      (should (cl-equalp response
+                         '((jsonrpc . "2.0")
+                           (result  . 6)
+                           (id      . 21145)))))
     )
 
   (ert-deftest test-full-procedure-call--changing-internal-state ()
@@ -395,8 +396,6 @@ is changed - things like the buffer should be unaffected."
     (defun jrpc-custom-setq (var-name new-value)
       (set (intern var-name) new-value))
     (let (
-          ;; Temporarily expose this function
-          (jrpc-exposed-functions '(jrpc-custom-setq))
           ;; This is the variable we will try to change
           (test-var 10298)
           )
@@ -405,7 +404,8 @@ is changed - things like the buffer should be unaffected."
         '(("jsonrpc" . "2.0")
           ("method"  . "jrpc-custom-setq")
           ("params"  . ["test-var" "this is a test string"])
-          ("id"      . 21145))))
+          ("id"      . 21145)))
+       '(jrpc-custom-setq))
       (should (string= test-var
                        "this is a test string"))))
 
@@ -418,16 +418,16 @@ state of the buffer.
 This only tests the change in the buffer - other tests are
 responsible for checking the actual response of the API."
     ;; Temporarily expose `insert'
-    (let ((jrpc-exposed-functions '(insert)))
-      (with-temp-buffer
-        (jrpc-handle
-         (json-encode
-          '(("jsonrpc" . "2.0")
-            ("method"  . "insert")
-            ("params"  . ["this is a test string"])
-            ("id"      . 21145))))
-        (should (string= (buffer-string)
-                         "this is a test string"))))
+    (with-temp-buffer
+      (jrpc-handle
+       (json-encode
+        '(("jsonrpc" . "2.0")
+          ("method"  . "insert")
+          ("params"  . ["this is a test string"])
+          ("id"      . 21145)))
+       '(insert))
+      (should (string= (buffer-string)
+                       "this is a test string")))
     )
 
   (ert-deftest test-full-procedure-call--unexposed-function ()
@@ -444,38 +444,38 @@ This test is designed to test two things:
 Other integration tests will check other error codes, but they
 won't check the structure of the response. It is assumed that
 this test is sufficient to check that for other error codes."
-    ;; Temporarily expose no functions
-    (let ((jrpc-exposed-functions '()))
-      ;; Get the response first, then progressively check each part of its
-      ;; contents.
-      (let* ((response (json-read-from-string
-                        (jrpc-handle
-                         (json-encode
-                          '(("jsonrpc" . "2.0")
-                            ("method"  . "+")
-                            ("params"  . [1 2 3])
-                            ("id"      . 21145))))))
-             (response-error (alist-get 'error response)))
-        (should response)
-        ;; Check each component, *then* check the full structure. We do this to
-        ;; make it easier to pinpoint why the test is failing.
-        (should (equal (alist-get 'jsonrpc response)
-                       "2.0"))
-        ;; The JSON-RPC 2.0 specification indicates that, when an error is
-        ;; raised, the `result' parameter should not be present in the response
-        ;; at all. It cannot simply be null - it should not be there.
-        (should (eq (assoc 'result response)
-                    nil))
-        (should (eq (alist-get 'id response)
-                    21145))
-        (should (eq (alist-get 'code response-error)
-                    ;; This error code corresponds to "method not found" in the
-                    ;; JSON-RPC 2.0 specification.
-                    -32601))
-        (should (eq (alist-get 'data response-error)
-                    nil))
-        ;; We don't check the exact string
-        (should (stringp (alist-get 'message response-error))))))
+    ;; Get the response first, then progressively check each part of its
+    ;; contents.
+    (let* ((response (json-read-from-string
+                      (jrpc-handle
+                       (json-encode
+                        '(("jsonrpc" . "2.0")
+                          ("method"  . "+")
+                          ("params"  . [1 2 3])
+                          ("id"      . 21145)))
+                       ;; Expose no functions
+                       '())))
+           (response-error (alist-get 'error response)))
+      (should response)
+      ;; Check each component, *then* check the full structure. We do this to
+      ;; make it easier to pinpoint why the test is failing.
+      (should (equal (alist-get 'jsonrpc response)
+                     "2.0"))
+      ;; The JSON-RPC 2.0 specification indicates that, when an error is
+      ;; raised, the `result' parameter should not be present in the response
+      ;; at all. It cannot simply be null - it should not be there.
+      (should (eq (assoc 'result response)
+                  nil))
+      (should (eq (alist-get 'id response)
+                  21145))
+      (should (eq (alist-get 'code response-error)
+                  ;; This error code corresponds to "method not found" in the
+                  ;; JSON-RPC 2.0 specification.
+                  -32601))
+      (should (eq (alist-get 'data response-error)
+                  nil))
+      ;; We don't check the exact string
+      (should (stringp (alist-get 'message response-error)))))
 
   (ert-deftest test-full-procedure-call--non-existant-function ()
     "Test a procedure call to a function that has been exposed, but doesn't exist.
@@ -483,24 +483,26 @@ this test is sufficient to check that for other error codes."
 This test is designed to trick the system up by making it think
 it is calling a valid function, causing an unexpected error when
 the function is invoked."
-    (let ((jrpc-exposed-functions '(jrpc-function-that-does-not-exist)))
-      (let* ((response (json-read-from-string
-                        (jrpc-handle
-                         (json-encode
-                          '(("method"  . "jrpc-function-that-does-not-exist")
-                            ("id"      . 1))))))
-             (response-error (alist-get 'error response)))
-        (should response)
-        ;; We only check the response code
-        (should (eq (alist-get 'code response-error)
-                    ;; This error code corresponds to "method not found" in the
-                    ;; JSON-RPC 2.0 specification.
-                    -32601)))))
+    (let* ((response (json-read-from-string
+                      (jrpc-handle
+                       (json-encode
+                        '(("method"  . "jrpc-function-that-does-not-exist")
+                          ("id"      . 1)))
+                       '(jrpc-function-that-does-not-exist))))
+           (response-error (alist-get 'error response)))
+      (should response)
+      ;; We only check the response code
+      (should (eq (alist-get 'code response-error)
+                  ;; This error code corresponds to "method not found" in the
+                  ;; JSON-RPC 2.0 specification.
+                  -32601))))
 
   (ert-deftest test-full-procedure-call--empty-json ()
     "Test a procedure call with empty JSON."
     (let* ((response (json-read-from-string
-                      (jrpc-handle "{}")))
+                      ;; The exposed functions don't matter here. Just pass an
+                      ;; empty list.
+                      (jrpc-handle "{}" '())))
            (response-error (alist-get 'error response)))
       (should response)
       (should (eq (alist-get 'code response-error)
@@ -514,18 +516,18 @@ the function is invoked."
 Symbols have to be passed by abusing the JSON syntax. Test a full
 procedure call works using this paradigm."
     ;; Temporarily expose `insert'
-    (cl-defun jrpc--test-function (arg1 &key keyword)
+    (cl-defun jrpc--symbols-test-function (arg1 &key keyword)
       ;; Keyword should be passed as a keyword, arg2 should end up a symbol.
       (should (equal arg1 "string"))
       (should (eq keyword 'symbol))
       t)
-    (let ((jrpc-exposed-functions '(jrpc--test-function)))
-      (should (jrpc-handle
-               (json-encode
-                '(("jsonrpc" . "2.0")
-                  ("method"  . "jrpc--test-function")
-                  ("params"  . ["string" ":keyword" "'symbol"])
-                  ("id"      . 201398))))))
+    (should (jrpc-handle
+             (json-encode
+              '(("jsonrpc" . "2.0")
+                ("method"  . "jrpc--symbols-test-function")
+                ("params"  . ["string" ":keyword" "'symbol"])
+                ("id"      . 201398)))
+             '(jrpc--symbols-test-function)))
     )
 
   (ert-deftest test-full-procedure-call--quoted-method ()
@@ -534,21 +536,21 @@ procedure call works using this paradigm."
 Given the way symbols are encoded, the user may get confused.
 They might pass the function name quoted, rather than as a
 straight string. This should be tolerated."
-    (let ((jrpc-exposed-functions '(+)))
-      (let ((response (json-read-from-string
-                       (jrpc-handle
-                        (json-encode
-                         '(("jsonrpc" . "2.0")
-                           ("method"  . "'+")
-                           ("params"  . [1 2 3])
-                           ("id"      . 23234)))))))
-        (should-not (alist-get 'error response))
-        (should (eq (alist-get 'result response)
-                    6))
-        (should (cl-equalp response
-                           '((jsonrpc . "2.0")
-                             (result  . 6)
-                             (id      . 23234))))))
+    (let ((response (json-read-from-string
+                     (jrpc-handle
+                      (json-encode
+                       '(("jsonrpc" . "2.0")
+                         ("method"  . "'+")
+                         ("params"  . [1 2 3])
+                         ("id"      . 23234)))
+                      '(+)))))
+      (should-not (alist-get 'error response))
+      (should (eq (alist-get 'result response)
+                  6))
+      (should (cl-equalp response
+                         '((jsonrpc . "2.0")
+                           (result  . 6)
+                           (id      . 23234)))))
     )
   )
 

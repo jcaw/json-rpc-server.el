@@ -10,16 +10,6 @@
 (require 'cl-lib)
 
 
-(defvar jrpc-exposed-functions '()
-  "List of functions that can be executed via POST request.
-
-This list is used by `jrpc-handler-eval-function' to determine
-which functions it will accept. It's a security measure to ensure
-only the functions you want are exposed. If you want to post a
-function to \"/eval-function\", it must be on this list or it
-will not be executed.")
-
-
 (define-error 'jrpc-procedural-error
   ;; This is the base class for all errors that occur during the handling of an
   ;; RPC request. The purpose of this error class is to categorise all runtime
@@ -247,27 +237,7 @@ list is equivalent to nil, so the empty list counts as nil."
 
 
 (defun jrpc--call-function (func args)
-  "Execute the remote procedure call for `FUNC' with `ARGS'.
-
-An error will be raised if the function does not exist (or has
-not been exposed.)"
-  ;; Check if the function is callable as close to calling the function as
-  ;; possible.
-  (unless (member func jrpc-exposed-functions)
-    (jrpc--raise-procedural-error
-     'jrpc-invalid-function
-     (concat
-      "Function has not been exposed (it may or may not exist). Cannot "
-      "execute. Please expose this function with `jrpc-expose-function' "
-      "if you want to call it remotely.")))
-  (unless (functionp func)
-    (jrpc--raise-procedural-error
-     'jrpc-invalid-function
-     "This symbol has been exposed, but it is not a function. Cannot call it."
-     ))
-  ;; TODO: Check if function is callable with args. Can the function signature
-  ;; be checked?
-  ;;
+  "Execute the remote procedure call for `FUNC' with `ARGS'."
   ;; TODO: Should we allow macro calls here too?
   (condition-case-unless-debug err
       (apply func args)
@@ -278,10 +248,17 @@ not been exposed.)"
       :original-error err))))
 
 
-(defun jrpc--execute-request (request)
+(defun jrpc--execute-request (request exposed-functions)
   "Execute a remote procedure call.
 
-`REQUEST' should be an alist representing a JSON-RPC 2.0 request."
+`REQUEST' should be an alist representing a JSON-RPC 2.0 request.
+
+`EXPOSED-FUNCTIONS' should be a list of function symbols that are
+allowed to be executed. The method will not be executed unless
+it's in this list. See `jrpc-handle' for more details.
+
+An error will be raised if the function in the request does not
+exist (or has not been exposed.)"
   (let* ((method-name (jrpc-alist-get "method" request))
          ;; Because we can only transport strings via JSON, the method name has
          ;; to be encoded as a string. That means we have to manually convert it
@@ -302,6 +279,21 @@ not been exposed.)"
                  "`method` could not be converted to an Elisp symbol. It "
                  "should be a string that converts into an elisp symbol."))))))
          (args (jrpc-alist-get "params" request)))
+    ;; We now check that the function is legal, and callable, before trying to
+    ;; call it.
+    (unless (member method-symbol exposed-functions)
+      (jrpc--raise-procedural-error
+       'jrpc-invalid-function
+       (concat
+        "Function has not been exposed (it may or may not exist). Cannot "
+        "execute.")))
+    (unless (functionp method-symbol)
+      (jrpc--raise-procedural-error
+       'jrpc-invalid-function
+       "This symbol has been exposed, but it is not a function. Cannot call it."
+       ))
+    ;; TODO: Check if function is callable with args. Can the function signature
+    ;; be checked?
     (jrpc--call-function method-symbol args)))
 
 
@@ -637,11 +629,15 @@ response."
      id)))
 
 
-(defun jrpc--handle-single (decoded-request)
+(defun jrpc--handle-single (decoded-request exposed-functions)
   "Handle a single JSON-RPC request.
 
 `DECODED-REQUEST' should be a JSON-RPC (up to 2.0) request,
 decoded into an alist.
+
+`EXPOSED-FUNCTIONS' should be a list of function symbols that are
+allowed to be executed. The method will not be executed unless
+it's in this list. See `jrpc-handle' for more details.
 
 Returns the JSON-RPC response, encoded in JSON."
   (let (
@@ -656,7 +652,8 @@ Returns the JSON-RPC response, encoded in JSON."
     (condition-case err
         (jrpc--encode-result-response
          (jrpc--execute-request
-           (jrpc--validate-request decoded-request))
+          (jrpc--validate-request decoded-request)
+          exposed-functions)
          id)
       (jrpc-procedural-error
        (jrpc--encode-error-response err id))
@@ -665,13 +662,29 @@ Returns the JSON-RPC response, encoded in JSON."
       )))
 
 
-(defun jrpc-handle (request-in-json)
+(defun jrpc-handle (request-in-json exposed-functions)
   "Handle a JSON-RPC request.
+
+Parameters
+----------
 
 `REQUEST-IN-JSON' should be a JSON-RPC (up to 2.0) request,
 encoded in a JSON string.
 
+`EXPOSED-FUNCTIONS' should be a list of function symbols that are
+exposed to RPC calls. The RPC call will only be executed if its
+method is in this list.
+
+  - Each function name should be a symbol.
+
+  - Do not include raw functions such as lambdas.
+
+  - Do not include string names.
+
 Returns the JSON-RPC 2.0 response, encoded in a JSON string.
+
+Description
+-----------
 
 This is the main entry point into the RPC layer. This is the
 method that decodes the RPC request and executes it. This method
@@ -714,34 +727,17 @@ JSON-RPC 2.0 specification:
             ;; have to decode them before joining them together.
             (json-encode
              (mapcar 'json-read-from-string
-                     (mapcar 'jrpc--handle-single decoded-request)))
-          (jrpc--handle-single decoded-request)))
+                     (mapcar (lambda (request)
+                               (jrpc--handle-single request
+                                                    exposed-functions))
+                             decoded-request)))
+          (jrpc--handle-single decoded-request
+                               exposed-functions)))
     (jrpc-procedural-error
      (jrpc--encode-error-response err nil))
     ;; (error
     ;;  (jrpc--encode-unknown-error-response err nil))
     ))
-
-
-(defun jrpc-expose-function (func)
-  "Expose a function to remote procedure calls.
-
-Only functions that have been exposed can be executed remotely
-via the JSON-RPC protocol.
-
-Functions may only be invoked by name - lambda functions are not
-allowed (there would be no way to reference them remotely by
-name). `FUNC' is the function symbol to expose."
-  (add-to-list 'jrpc-exposed-functions func))
-
-
-(defun jrpc-hide-function (func)
-  "Hide a function from remote procedure calls.
-
-`FUNC' is the function symbol to hide.
-
-This reverses `jrpc-expose-function'."
-  (setq jrpc-exposed-functions (remove func jrpc-exposed-functions)))
 
 
 (provide 'json-rpc-server)
