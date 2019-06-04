@@ -250,6 +250,93 @@ it does not block with errors when it cannot decode the id."
       (should (eq (jrpc--decode-id "{\"id\": {\"nested\": \"dict\"}}")
                   nil)))
     )
+
+  (ert-deftest test-jrpc--replace-symbol-strings ()
+    "Test for `test-jrpc--replace-symbol-strings'.
+
+This test throws hypothetical objects at
+`test-jrpc--replace-symbol-strings' and ensures it replaces the
+symbols correctly."
+    ;; Symbol variants - cover normal symbols, and keywords.
+    (progn
+      (should (eq (jrpc--replace-symbol-strings "'symbol")
+                  'symbol))
+      (should (eq (jrpc--replace-symbol-strings "'SYMBOL")
+                  'SYMBOL))
+      (should (eq (jrpc--replace-symbol-strings ":keyword")
+                  :keyword))
+      (should (eq (jrpc--replace-symbol-strings ":KEYWORD")
+                  :KEYWORD))
+
+      ;; Special case - quoted keywords should just parse like normal symbols
+      (should (eq (jrpc--replace-symbol-strings "':keyword")
+                  :keyword)))
+
+    ;; Straight strings
+    (progn
+      (should (equal (jrpc--replace-symbol-strings "a string")
+                     "a string"))
+      (should (equal (jrpc--replace-symbol-strings "'double quoted string'")
+                     "'double quoted string'"))
+      (should (equal (jrpc--replace-symbol-strings ":double key string:")
+                     ":double key string:")))
+
+    ;; There's no special handling for keywords with apostrophes in.
+    (should (equal (jrpc--replace-symbol-strings ":mixed 'keyword")
+                   :mixed\ \'keyword))
+
+    ;; Other types
+    (progn
+      (should (eq (jrpc--replace-symbol-strings nil)
+                  nil))
+      (should (eq (jrpc--replace-symbol-strings 23)
+                  23)))
+
+    ;; Nested types
+    (should (equal (jrpc--replace-symbol-strings '(something))
+                   '(something)))
+    (should (equal (jrpc--replace-symbol-strings '(nil))
+                   '(nil)))
+    (should (equal (jrpc--replace-symbol-strings '("string"))
+                   '("string")))
+    (should (equal (jrpc--replace-symbol-strings '("'symbol"))
+                   '(symbol)))
+
+    ;; Cons cells
+    (should (equal (jrpc--replace-symbol-strings '("'symbol" . "a string"))
+                   '(symbol . "a string")))
+
+    ;; Monster nesting test - test this thoroughly
+    (should (equal (jrpc--replace-symbol-strings
+                    '(
+                      ;; Cons cell
+                      ("string1" . "'symbol1")
+                      ;; Straight list
+                      ("string2" "'symbol2" ":keyword2" 2)
+                      ;; Individual components
+                      ":keyword3"
+                      "'symbol3"
+                      "string3"
+                      3
+                      ("string4"
+                       ;; Nested cons cell
+                       ("'symbol4" . ":keyword4")
+                       4)))
+                   '(
+                     ;; Cons cell
+                     ("string1" . symbol1)
+                     ;; Straight list
+                     ("string2" symbol2 :keyword2 2)
+                     ;; Individual components
+                     :keyword3
+                     symbol3
+                     "string3"
+                     3
+                     ("string4"
+                      ;; Nested cons cell
+                      (symbol4 . :keyword4)
+                      4))))
+    )
   )
 
 
@@ -419,6 +506,49 @@ the function is invoked."
                   ;; This error code corresponds to "invalid request" in the
                   ;; JSON-RPC 2.0 specification.
                   -32600))))
+
+  (ert-deftest test-full-procedure-call--with-symbols ()
+    "Test a valid procedure call, that includes symbols.
+
+Symbols have to be passed by abusing the JSON syntax. Test a full
+procedure call works using this paradigm."
+    ;; Temporarily expose `insert'
+    (cl-defun jrpc--test-function (arg1 &key keyword)
+      ;; Keyword should be passed as a keyword, arg2 should end up a symbol.
+      (should (equal arg1 "string"))
+      (should (eq keyword 'symbol))
+      t)
+    (let ((jrpc-exposed-functions '(jrpc--test-function)))
+      (should (jrpc-handle
+               (json-encode
+                '(("jsonrpc" . "2.0")
+                  ("method"  . "jrpc--test-function")
+                  ("params"  . ["string" ":keyword" "'symbol"])
+                  ("id"      . 201398))))))
+    )
+
+  (ert-deftest test-full-procedure-call--quoted-method ()
+    "Test that a procedure call still works when the function is quoted.
+
+Given the way symbols are encoded, the user may get confused.
+They might pass the function name quoted, rather than as a
+straight string. This should be tolerated."
+    (let ((jrpc-exposed-functions '(+)))
+      (let ((response (json-read-from-string
+                       (jrpc-handle
+                        (json-encode
+                         '(("jsonrpc" . "2.0")
+                           ("method"  . "'+")
+                           ("params"  . [1 2 3])
+                           ("id"      . 23234)))))))
+        (should-not (alist-get 'error response))
+        (should (eq (alist-get 'result response)
+                    6))
+        (should (cl-equalp response
+                           '((jsonrpc . "2.0")
+                             (result  . 6)
+                             (id      . 23234))))))
+    )
   )
 
 
