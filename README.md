@@ -38,14 +38,18 @@ The default transport layer uses the http protocol, and is available
      work perfectly with a centered heading, as above. It will need manual
      tweaking -->
 
-## Table of Contents
+### Table of Contents
 
 - [How it Works](#how-it-works)
+  - [Examples](#examples)
     - [Example: Calling a Method](#example-calling-a-method)
-    - [Example: Malformed JSON](#example-malformed-json)
     - [Example: Invalid Request](#example-invalid-request)
+    - [Example: Malformed JSON](#example-malformed-json)
 - [Datatype Limitations](#datatype-limitations)
-    - [Other Types](#other-types)
+  - [Other Types](#other-types)
+  - [Symbols](#symbols)
+  - [Keyword Arguments](#keyword-arguments)
+    - [Example: Symbols and Keyword Arguments](#example-symbols-and-keyword-arguments)
 - [Installation](#installation)
 - [List of Transport Layers](#list-of-transport-layers)
 - [FAQ](#faq)
@@ -55,9 +59,8 @@ The default transport layer uses the http protocol, and is available
 
 ## How it Works
 
-Functions in this package are prefixed with `jrpc-`.
-
-`jrpc-handle` is the main entry point into the package. 
+`jrpc-handle` is the main entry point into the package. Functions in this
+package are prefixed with `jrpc-`.
 
 ```emacs-lisp
 ;; This will decode a JSON-RPC 2.0 request, execute it, and return the JSON-RPC 2.0 response.
@@ -125,13 +128,58 @@ Decoded:
 
 This string-encoded response can now be returned to the client.
 
-#### Example: Symbols and Keyword Arguents
+(See the [Symbols](#symbols) section for how to transfer symbols and keyword
+arguments.)
 
-See the [Symbols](#symbols) section for how to transfer symbols and keyword arguments. 
+#### Example: Invalid Request
+
+This time, let's try an invalid request.
+
+```json
+{
+    "params": [1, 2, 3],
+    "id": 23092
+}
+```
+
+This request is invalid because it has no `"method"`. The call to `jrpc-handle`:
+
+```emacs-lisp
+(jrpc-handle
+ "{
+    \"params\": [1, 2, 3],
+    \"id\": 23092
+}")
+```
+
+Here's what `jrpc-handle` returns:
+
+```emacs-lisp
+"{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32600,\"message\":\"`method` was not provided.'\",\"data\":null},\"id\":23092}"
+```
+
+Decoded:
+
+```json
+{
+    "jsonrpc": "2.0",
+    "error": {
+        "code": -32600,
+        "message": "`method` was not provided.",
+        "data": null
+    },
+    "id": 23092
+}
+```
+
+Note the `"id"` field. `jrpc-handle` will do its best to extract an `id` from all
+requests, even invalid requests, so errors can be synced up to their respective
+requests.
 
 #### Example: Malformed JSON
 
-If there is a problem with the request (or another error occurs), a `jrpc-handle` will encode a JSON-RPC 2.0 error response. Here's an example.
+If there is a problem with the request (or another error occurs), a
+`jrpc-handle` will encode a JSON-RPC 2.0 error response. Here's an example.
 
 Let's try some malformed JSON:
 
@@ -175,51 +223,6 @@ possible, the contents of that error will be returned in the
 `"underlying-error"` field. If there is no underlying error, this field will not
 be present.
 
-#### Example: Invalid Request
-
-This time, let's try an invalid request.
-
-```json
-{
-    "params": [1, 2, 3],
-    "id": 23092
-}
-```
-
-The call to `jrpc-handle`:
-
-```emacs-lisp
-(jrpc-handle 
- "{
-    \"params\": [1, 2, 3],
-    \"id\": 23092
-}")
-```
-
-Here's what `jrpc-handle` returns:
-
-```emacs-lisp
-"{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32600,\"message\":\"`method` was not provided.'\",\"data\":null},\"id\":23092}"
-```
-
-Decoded:
-
-```json
-{
-    "jsonrpc": "2.0",
-    "error": {
-        "code": -32600,
-        "message": "`method` was not provided.",
-        "data": null
-    },
-    "id": 23092
-}
-```
-
-Note the `id` field. `jrpc-handle` will do its best to extract an `id` from all
-requests, even invalid requests, so errors can be synced up to their respective
-requests.
-
 ## Datatype Limitations
 
 The structure of JSON limits the types of variables that can be transferred.
@@ -254,7 +257,7 @@ publish that instead.
 ### Symbols
 
 Symbols are important in Elisp. Luckily, by abusing the JSON-RPC syntax we can
-transfer symbols. Strings begin with a single quote will be decoded into
+transfer symbols. Strings beginning with a single quote will be decoded into
 symbols. Strings that start with a single colon will be decoded into keywords.
 
 For example:
@@ -275,10 +278,14 @@ That list will be decoded into:
 '("a string" 'a-symbol :a-keyword)
 ```
 
-Note that by default, JSON-RPC requires that keyword arguments be passed as
-dictionaries. This is not supported. Elisp takes a mixture of named and keyword
-arguments, and arguments are lists. If you want to pass keyword arguments, you
-must encode them as a list:
+### Keyword Arguments
+
+By default, JSON-RPC requires that keyword arguments be passed as objects
+(`{"keyword": "value"}`). This is not supported. Elisp takes a mixture of named
+and keyword arguments, and arguments are lists. Thus `"params"` should always be
+a list - never an object.
+
+If you want to pass keyword arguments, you must encode them as a list:
 
 ```json
 {
@@ -286,7 +293,7 @@ must encode them as a list:
                ":keyword1", "value1", 
                ":keyword2", "value2"]
 }
-```
+``` 
 
 #### Example: Symbols and Keyword Arguments
 
@@ -333,7 +340,18 @@ The result of this function call will be returned in a JSON-RPC 2.0 object
 
 ## Installation
 
-It will be installable from MELPA once I persuade them to add it.
+The package itself is named `json-rpc-server`. The intention is to publish this
+on MELPA - hold out until they've accepted it. Once that happens:
+
+```text
+M-x pacakge-install RET json-rpc-server RET
+```
+
+Once installed, require it with: 
+
+```emacs-lisp
+(require 'json-rpc-server)
+```
 
 ## List of Transport Layers
 
