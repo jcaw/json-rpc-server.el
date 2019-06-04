@@ -343,7 +343,10 @@ Relevant errors will be raised if the request is invalid."
     ;; TODO: Perhaps ensure the function is not a `json-rpc-server' function?
     ;; E.g. disallow the `jrpc-' prefix? Perhaps not. Unlikely to be reliable.
     ;; User should simply never expose those functions.
-    (unless (stringp method)
+    (unless (or (stringp method)
+                ;; Sometimes users may get confused and send a symbol as the
+                ;; method name. That's fine. Tolerate this behavior.
+                (symbolp method))
       (jrpc--raise-procedural-error
        'jrpc-invalid-request "`method` should be a string."))
     ;; `params' should be a list of arguments, but it is optional. We have to
@@ -374,31 +377,34 @@ If there is an error parsing the JSON, a
 `jrpc-invalid-request-json' error will be raised. This can be
 converted into a JSON-RPC response with
 `jrpc--encode-error-response'."
-  ;; Set some custom options for the JSON decoder.
-  (let (
-        ;; Arrays should be decoded as lists, because this is the array-like
-        ;; type most methods are going to expect.
-        ;;
-        ;; This adds a limitation to the RPC server. Some functions may expect
-        ;; vectors, but only one type of list can be transferred via JSON. Those
-        ;; functions will receive lists. This will have to be fixed manually by
-        ;; the user with some kind of proxy function.
-        (json-array-type 'list)
-        ;; Hash tables are faster, but alists are more common.
-        (json-object-type 'alist)
-        ;; Keys should be symbols because alists keys should generally be
-        ;; symbols, not strings.
-        (json-key-type 'string)
-        )
-    (condition-case err
-        (json-read-from-string json)
-      (error
-       ;; Catch JSON errors and raise a jrpc error that can be more easily
-       ;; understood.
-       (jrpc--raise-procedural-error
-        'jrpc-invalid-request-json
-        "There was an error decoding the request's JSON."
-        :original-error err)))))
+  ;; Decode symbol-like strings into symbols. Do this as part of the JSON
+  ;; parsing process.
+  (jrpc--replace-symbol-strings
+   ;; Set some custom options for the JSON decoder.
+   (let (
+         ;; Arrays should be decoded as lists, because this is the array-like
+         ;; type most methods are going to expect.
+         ;;
+         ;; This adds a limitation to the RPC server. Some functions may expect
+         ;; vectors, but only one type of list can be transferred via JSON. Those
+         ;; functions will receive lists. This will have to be fixed manually by
+         ;; the user with some kind of proxy function.
+         (json-array-type 'list)
+         ;; Hash tables are faster, but alists are more common.
+         (json-object-type 'alist)
+         ;; Keys should be symbols because alists keys should generally be
+         ;; symbols, not strings.
+         (json-key-type 'string)
+         )
+     (condition-case err
+         (json-read-from-string json)
+       (error
+        ;; Catch JSON errors and raise a jrpc error that can be more easily
+        ;; understood.
+        (jrpc--raise-procedural-error
+         'jrpc-invalid-request-json
+         "There was an error decoding the request's JSON."
+         :original-error err))))))
 
 
 (defun jrpc--replace-symbol-strings (object)
@@ -648,8 +654,7 @@ Returns the JSON-RPC response, encoded in JSON."
     (condition-case err
         (jrpc--encode-result-response
          (jrpc--execute-request
-          (jrpc--replace-symbol-strings
-           (jrpc--validate-request decoded-request)))
+           (jrpc--validate-request decoded-request))
          id)
       (jrpc-procedural-error
        (jrpc--encode-error-response err id))
