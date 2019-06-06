@@ -3,6 +3,7 @@
 ;; Copyright (C) 2019  GitHub user "Jcaw"
 
 ;; Author: GitHub user "Jcaw"
+;; URL: https://github.com/jcaw/json-rpc-server.el
 ;; Keywords: tools, comm
 
 ;; This program is free software; you can redistribute it and/or modify
