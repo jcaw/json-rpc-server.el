@@ -39,6 +39,12 @@ messages - it just tests the class of the signal."
                ("method" . "message")
                ("id" . 12456))))
 
+    ;; This time, the id is a string.
+    (should (jrpc--validate-request
+             '(("jsonrpc" . "2.0")
+               ("method" . "message")
+               ("id" . "b48297ce-8e07-4e72-b487-4d06b45cdf52"))))
+
     ;; Invalid `jsonrpc' param
     (progn
       ;; jsonrpc is 3.0 - too high
@@ -84,11 +90,17 @@ messages - it just tests the class of the signal."
                      '(("jsonrpc" . "2.0")
                        ("method" . "message")))
                     :type 'jrpc-invalid-request)
-      ;; Invalid id type - in this case, a string.
+      ;; Invalid id type - in this case, a list.
       (should-error (jrpc--validate-request
                      '(("jsonrpc" . "2.0")
                        ("method" . "message")
-                       ("id" . "12456")))
+                       ("id" . ["this is a list"])))
+                    :type 'jrpc-invalid-request)
+      ;; Id is null.
+      (should-error (jrpc--validate-request
+                     '(("jsonrpc" . "2.0")
+                       ("method" . "message")
+                       ("id" . :json-null)))
                     :type 'jrpc-invalid-request))
     )
 

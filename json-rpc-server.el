@@ -353,7 +353,10 @@ Relevant errors will be raised if the request is invalid."
     (unless id
       (jrpc--raise-procedural-error
        'jrpc-invalid-request "`id` not provided"))
-    (unless (integerp id)
+    ;; "id" can be a string or a number. Floats are allowed, which seems odd
+    ;; given rounding errors.
+    (unless (or (numberp id)
+                (stringp id))
       (jrpc--raise-procedural-error
        'jrpc-invalid-request "`id` should be an integer."))
     request-alist))
