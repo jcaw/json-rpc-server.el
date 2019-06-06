@@ -1,4 +1,4 @@
-;;; json-rpc-server.el --- Server-side JSON-RPC library. Execute JSON-RPC requests in Emacs.   -*- lexical-binding: t; -*-
+;;; json-rpc-server.el --- Server-side JSON-RPC library.  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2019  GitHub user "Jcaw"
 
