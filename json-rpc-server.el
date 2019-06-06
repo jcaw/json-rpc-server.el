@@ -74,6 +74,18 @@
 (require 'cl-lib)
 
 
+(defgroup json-rpc-server nil
+  "Group relating to json-rpc-server.el"
+  :prefix "jrpc-"
+  :link `(url-link :tag "Send Bug Report"
+                   "https://github.com/jcaw/json-rpc-server.el/issues")
+  :link '(url-link :tag "Other Emacs packages by Jcaw"
+                   "https://github.com/jcaw?utf8=%E2%9C%93&tab=repositories&q=&type=source&language=emacs+lisp")
+  :link '(url-link :tag "Homepage/Description"
+                   "https://github.com/jcaw/json-rpc-server.el")
+  :group 'tools)
+
+
 (define-error 'jrpc-procedural-error
   ;; This is the base class for all errors that occur during the handling of an
   ;; RPC request. The purpose of this error class is to categorise all runtime
