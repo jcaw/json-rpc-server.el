@@ -48,6 +48,7 @@ protocol.
     - [Example: Calling a Method](#example-calling-a-method)
     - [Example: Invalid Request](#example-invalid-request)
     - [Example: Malformed JSON](#example-malformed-json)
+    - [Example: Batch Requests](#example-batch-requests)
 - [Datatype Limitations](#datatype-limitations)
   - [Other Types](#other-types)
   - [Symbols](#symbols)
@@ -225,6 +226,91 @@ the Elisp, which may contain more meaningful information about the error. When
 possible, the contents of that error will be returned in the
 `"underlying-error"` field. If there is no underlying error, this field will not
 be present.
+
+#### Example: Batch Requests
+
+You can also execute multiple requests at once. This is useful if the client
+wants to minimize the number of requests they have to make to a slow transport
+layer. Each request will be executed, and a string response containing all the
+results will be returned. Unlike most JSON-RPC 2.0 protocols, batch requests are
+guaranteed to be executed in the same order they were received.
+
+Let's make two requests - one to a valid function, one to an invalid one. We'll
+batch them.
+
+```json
+[
+  {
+    "jsonrpc": "2.0",
+    "method": "+",
+    "params": [1, 2, 3],
+    "id": 1
+  },
+  {
+    "jsonrpc": "2.0",
+    "method": "insert",
+    "params": ["Some text to insert"],
+    "id": 2
+  }
+]
+```
+
+The call to `jrpc-handle`:
+
+```emacs-lisp
+(jrpc-handle
+ "[
+    {
+        \"jsonrpc\": \"2.0\",
+        \"method\": \"+\",
+        \"params\": [1, 2, 3],
+        \"id\": 1
+    },
+    {
+        \"jsonrpc\": \"2.0\",
+        \"method\": \"insert\",
+        \"params\": [\"Some text to insert\"],
+        \"id\": 2
+    }
+]"
+ ;; Let's expose `+', but not `insert', to demonstrate a result and an error.
+ '(+))
+```
+
+Here's what `jrpc-handle` returns:
+
+```emacs-lisp
+"[{\"jsonrpc\":\"2.0\",\"result\":6,\"id\":1},{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32601,\"message\":\"Function has not been exposed (it may or may not exist). Cannot execute.\",\"data\":null},\"id\":2}]"
+```
+
+Decoded:
+
+```json
+[
+  {
+    "jsonrpc": "2.0",
+    "result": 6,
+    "id": 1
+  },
+  {
+    "jsonrpc": "2.0",
+    "error": {
+      "code": -32601,
+      "message": "Function has not been exposed (it may or may not exist). Cannot execute.",
+      "data": null
+    },
+    "id": 2
+  }
+]
+```
+
+As you can see, one of the function calls executed successfully, another caused
+an error. The responses should be returned in the same order their requests were
+submitted, but they can also be synchronized based on their `"id"`.
+
+`jrpc-handle` assumes that requests are atomic until proven otherwise. If your
+batch request is *malformed*, `jrpc-handle` will probably not return a batch in
+response - it will respond with a single "malformed json" error.
 
 ## Datatype Limitations
 
