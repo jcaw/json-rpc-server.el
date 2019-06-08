@@ -350,7 +350,7 @@ cl-structs, etc.
 There is no easy way around this. JSON-RPC provides simplicity, at the cost of
 flexibility. If you want to call a function that expects a different type, you
 must write an intermediary function that translates from the available ones and
-publish that instead.
+publish your intermediary instead.
 
 ### Symbols
 
@@ -362,7 +362,8 @@ For example:
 
 - The string `"'a-symbol"` becomes the symbol `'a-symbol`.
 - The string `":a-keyword"` becomes the symbol `:a-keyword`.
-- `"'wrapped-string'"` does not change. It will stay a string.
+- `"'wrapped-string'"` does not change, because it contains multiple quotes. It
+  will stay a string.
 
 Let's send a list:
 
