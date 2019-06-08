@@ -320,15 +320,17 @@ JSON only contains six datatypes. Thus, functions exposed by this protocol
 
 The datatypes are mapped as follows:
 
-| JSON Datatype             | JSON Examples             | Decodeded Elisp Datatype | Elisp Examples          |
-| ---                       | ---                       | ---                      | ---                     |
-| string                    | `"string"`                | string                   | `"string"`              |
-| [quoted string](#symbols) | `"'symbol"`, `":keyword"` | symbol                   | `'symbol`, `:keyword`   |
-| number                    | `21`, `3.14`              | integer or float         | `21`, `3.14`            |
-| boolean                   | `true`, `false`           | `t` or `:json-false`     | `t`, `:json-false`      |
-| null                      | `null`                    | `nil`                    | `nil`                   |
-| object                    | `{"Key": "Value"}`        | alist                    | `'(("Key" . "Value"))'` |
-| array                     | `[1, 2, 4, 7]`            | list                     | `'(1 2 4 7)`            |
+| JSON Datatype             | Decodeded Elisp Datatype | In JSON                   | In Elisp                |
+| ---                       | ---                      | ---                       | ---                     |
+| string                    | string                   | `"string"`                | `"string"`              |
+| [quoted string](#symbols) | symbol                   | `"'symbol"`, `":keyword"` | `'symbol`, `:keyword`   |
+| number                    | integer or float         | `21`, `3.14`              | `21`, `3.14`            |
+| boolean                   | `t` or `:json-false`     | `true`, `false`           | `t`, `:json-false`      |
+| null                      | `nil`                    | `null`                    | `nil`                   |
+| object                    | alist                    | `{"Key": "Value"}`        | `'(("Key" . "Value"))'` |
+| array                     | list                     | `[1, 2, 4, 7]`            | `'(1 2 4 7)`            |
+
+Note that alist keys are decoded as strings.
 
 You may notice that "quoted strings" are decoded differently to normal strings.
 See the [Symbols](#symbols) section for a full explanation.
