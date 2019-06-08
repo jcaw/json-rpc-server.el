@@ -445,7 +445,7 @@ The package itself is named `json-rpc-server`. The intention is to publish this
 on MELPA - hold out until they've accepted it. Once that happens:
 
 ```text
-M-x pacakge-install RET json-rpc-server RET
+M-x package-install RET json-rpc-server RET
 ```
 
 Once installed, require it with: 
