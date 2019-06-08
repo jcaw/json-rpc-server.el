@@ -35,10 +35,11 @@ protocol.
 ---
 
 
-<!-- markdown-toc start - Don't edit this section. Run M-x
-     markdown-toc-refresh-toc Please note that the markdown generator doesn't
-     work perfectly with a centered heading, as above. It will need manual
-     tweaking -->
+<!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-generate-toc
+
+     Please note that the markdown generator doesn't work perfectly with a
+     centered heading. You can't refresh this list, you have to regenerate it.
+     -->
 
 ### Table of Contents
 
