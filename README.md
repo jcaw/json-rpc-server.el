@@ -379,10 +379,12 @@ That list will be decoded into:
 
 ### Keyword Arguments
 
-By default, JSON-RPC requires that keyword arguments be passed as objects
-(`{"keyword": "value"}`). This is not supported. Elisp takes a mixture of named
-and keyword arguments, and arguments are lists. Thus `"params"` should always be
-a list - never an object.
+By default, JSON-RPC 2.0
+[requires](https://www.jsonrpc.org/specification#parameter_structures) that
+keyword arguments be passed as "objects" (you might know them as dictionaries -
+`{"keyword": "value"}`). This is not supported. In Elisp, you cannot reference
+positional arguments by name and they may be mixed with keyword arguments.
+Objects aren't compatible with that structure.
 
 If you want to pass keyword arguments, you must encode them as a list:
 
@@ -413,7 +415,7 @@ Here's how to encode that in a JSON-RPC call:
 {
     "jsonrpc": "2.0",
     "method": "advice-add",
-    "params": [ ":after" "'nav-flash-show"],
+    "params": ["'scroll-up" ":after" "'nav-flash-show"],
     "id": 29492,
 }
 ```
@@ -434,8 +436,8 @@ Expressed another way, this is equivalent to:
 (advice-add 'switch-to-buffer :after 'save-current-buffer)
 ```
 
-The result of this function call will be returned in a JSON-RPC 2.0 object
-(encoded into a string).
+(Please note that this would be terrible way to flash the line in actual Emacs.
+Don't use it. You'd have to wait between each scroll press.)
 
 ## Installation
 
