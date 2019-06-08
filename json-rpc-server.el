@@ -819,7 +819,7 @@ JSON-RPC 2.0 specification:
                                exposed-functions)))
     (jrpc-procedural-error
      (jrpc--encode-error-response err nil))
-    ;; TODO: Encode unknown error
+    ;; TODO: Encode unknown error?
     ;; (error
     ;;  (jrpc--encode-unknown-error-response err nil))
     ))
