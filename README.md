@@ -28,7 +28,7 @@ for authenticating requests, the transport layer should also handle
 authentication.
 
 The default transport layer is
-[Porthole](http://www.github.com/jcaw/http-rpc-server.el). It uses the HTTP
+[Porthole](http://www.github.com/jcaw/porthole). It uses the HTTP
 protocol.
 
 
