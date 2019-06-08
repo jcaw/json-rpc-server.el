@@ -449,9 +449,9 @@ Once installed, require it with:
 If you want to actually make RPC calls to Emacs, you need to use a transport
 layer. Here's a list:
 
-| Project                                                            | Protocol |
-| -------                                                            | -------- |
-| [`http-rpc-server`](http://www.github.com/jcaw/http-rpc-server.el) | HTTP     |
+| Project                                           | Protocol |
+| -------                                           | -------- |
+| [`Porthole`](http://www.github.com/jcaw/porthole) | HTTP     |
 
 Have you written one? Open a pull request and I'll add it.
 
