@@ -157,7 +157,8 @@ This request is invalid because it has no `"method"`. The call to `jrpc-handle`:
  "{
     \"params\": [1, 2, 3],
     \"id\": 23092
-}")
+}"
+ '(+))
 ```
 
 Here's what `jrpc-handle` returns:
