@@ -89,7 +89,8 @@ allowed to execute, and which it is not.
 
 #### Example: Calling a Method
 
-Encode a request according to the JSON-RPC 2.0 protocol. `method` should be the method name, as a string.
+Encode a request according to the JSON-RPC 2.0 protocol. `method` should be the
+method name, as a string.
 
 Here's an example request:
 
@@ -111,11 +112,13 @@ Let's encode this into a string and pass it to `jrpc-handle`:
     \"method\": \"+\",
     \"params\": [1,2,3],
     \"id\": 29492
-}")
+}"
+ ;; We have to make sure the `+' function is exposed to RPC calls.
+ '(+))
 ```
 
 `json-rpc-server` will decode the request, then apply the function `+` to the
-list `'(1, 2, 3)`. Here's what the result of `jrpc-handle` will be:
+list `'(1 2 3)`. Here's what the result of `jrpc-handle` will be:
 
 ```emacs-lisp
 "{\"jsonrpc\":\"2.0\",\"result\":6,\"id\":29492}"
