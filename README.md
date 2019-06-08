@@ -63,26 +63,27 @@ protocol.
 
 ## How it Works
 
-`jrpc-handle` is the main entry point into the package. Functions in this
-package are prefixed with `jrpc-`.
+`jrpc-handle` is the main entry point into the package (functions in this
+package are prefixed with `jrpc-`). `jrpc-handle` takes a JSON-RPC 2.0 [request
+string](https://www.jsonrpc.org/specification#request_object), and a list of
+functions that are allowed to be called remotely.
 
 ```emacs-lisp
 ;; This will decode a JSON-RPC 2.0 request, execute it, and return the JSON-RPC 2.0 response.
-(jrpc-handle string-encoded-json-rpc-request)
+(jrpc-handle string-encoded-json-rpc-request
+             list-of-legal-functions)
 ```
 
-If an error occurs, the response will be a string containing a JSON-RPC 2.0
-error response.
+If successful, the result will be a string containing the JSON-RPC 2.0 [result
+response](https://www.jsonrpc.org/specification#response_object). If an error
+occurs, it will contain a JSON-RPC 2.0 [error
+response](https://www.jsonrpc.org/specification#error_object). Errors will be
+captured and encoded into strings - they won't be raised above the handler
+(unless you are debugging).
 
-Only functions you have specifically exposed can be called via RPC. To expose a
-function, call `jrpc-expose function`. For example:
-
-```emacs-lisp
-;; This will allow the `+' function to be called via JSON-RPC.
-(jrpc-expose-function '+)
-```
-
-You can also expose functions manually by adding them to `jrpc-exposed-functions`.
+Only functions you have specifically exposed can be called via RPC. You must
+pass a list of functions to `jrpc-handle` so it knows which functions it's
+allowed to execute, and which it is not.
 
 ### Examples
 
