@@ -84,7 +84,7 @@
                    "https://github.com/jcaw/json-rpc-server.el/issues")
   :link '(url-link :tag "Other Emacs packages by Jcaw"
                    "https://github.com/jcaw?utf8=%E2%9C%93&tab=repositories&q=&type=source&language=emacs+lisp")
-  :link '(url-link :tag "Homepage/Description"
+  :link '(url-link :tag "Homepage"
                    "https://github.com/jcaw/json-rpc-server.el")
   :group 'tools)
 
