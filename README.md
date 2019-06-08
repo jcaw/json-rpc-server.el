@@ -366,7 +366,7 @@ Let's send a list:
 That list will be decoded into:
 
 ```emacs-lisp
-'("a string" 'a-symbol :a-keyword)
+'("a string" a-symbol :a-keyword)
 ```
 
 ### Keyword Arguments
