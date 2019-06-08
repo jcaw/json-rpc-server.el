@@ -467,19 +467,37 @@ Have you written one? Open a pull request and I'll add it.
 
 ## FAQ
 
-- <b>Does it support batch requests?</b> Yes. Pass in an encoded list of
-  requests to execute each in turn.
-- <b>Is it compatible with older versions of JSON-RPC?</b> Yes. It should accept
-  and work fine with older JSON-RPC requests. However, they aren't officially
-  supported and the response will still be JSON-RPC 2.0.
-- <b>Does it support keyword arguments</b> Not currently, no. Support will be
-  added for this in the future.
-- <b>How can I send a [vector, hash table, etc]?</b> You can't. You have to
-  write an intermediate function that constructs these types from alists,
-  strings, etc.
-- <b>Does it support notifications?</b> No. All requests block until a value is
-  returned (or an error occurs). This could be implemented at the transport
-  level, if desired.
-- <b>Can I run multiple servers at once?</b> No. One server per session. This
-  could be added in the future if it's a feature people really want.
-- <b>Are you open to pull requests?</b> Yes!
+- <b>Is it compatible with older versions of JSON-RPC?</b>
+
+  Yes. It should work fine with older JSON-RPC requests. However, they aren't
+  officially supported and the response will still be JSON-RPC 2.0.
+
+- <b>Does it support keyword arguments?</b>
+
+  Yes, but not in the standard format. You may not pass them as objects. Pass
+  them [as lists](#keyword-arguments), just like in Elisp.
+
+- <b>How can I send a [vector, hash table, etc]?</b>
+
+  [You can't](#other-types). You have to write an intermediate function that constructs these
+  types from alists, strings, etc.
+
+- <b>Does it support notifications?</b>
+
+  No. All requests block until a value is returned (or an error occurs). This
+  could be implemented at the transport level, if desired.
+
+- <b>Does it support batch requests?</b>
+
+  Yes. See the [batch requests](#example-batch-requests) example.
+
+- <b>Can I run multiple servers at once?</b>
+
+  `json-rpc-server` has a somewhat misleading name. It's not a server, it's a
+  server-side implementation of the protocol. The transport layer can run as
+  many servers as it likes.
+
+- <b>Are you open to pull requests?</b>
+
+  Yes! Please pull against the
+  [develop](https://github.com/jcaw/json-rpc-server.el/tree/develop) branch.
