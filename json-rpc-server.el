@@ -361,7 +361,6 @@ exist (or has not been exposed.)"
     ;; We now check that the function is legal, and callable, before trying to
     ;; call it.
     (unless (member method-symbol exposed-functions)
-      (message "Got \"%s\" of type %s. Exposed are: %s" method-symbol (type-of method-symbol) exposed-functions)
       (jrpc--raise-procedural-error
        'jrpc-invalid-function
        (concat
