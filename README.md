@@ -21,13 +21,15 @@ JSON string, Emacs executes the specified function(s), and a JSON-RPC 2.0
 response is returned.
 
 This package is designed sit underneath a transport layer. <b>No transport logic
-is included.</b> A separate transport layer needs to be used to communicate with
+is included.</b> The transport layer is responsible for communicating with
 external clients. Since JSON-RPC provides [no inbuilt
-mechanism](https://groups.google.com/d/msg/json-rpc/PN462g49yL8/DdMa93870_oJ) for
-authenticating requests, the transport layer should also handle authentication.
+mechanism](https://groups.google.com/d/msg/json-rpc/PN462g49yL8/DdMa93870_oJ)
+for authenticating requests, the transport layer should also handle
+authentication.
 
-The default transport layer uses the http protocol, and is available
-[here](http://www.github.com/jcaw/http-rpc-server.el).
+The default transport layer is
+[Porthole](http://www.github.com/jcaw/http-rpc-server.el). It uses the HTTP
+protocol.
 
 
 ---
