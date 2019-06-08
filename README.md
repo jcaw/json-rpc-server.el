@@ -187,8 +187,10 @@ requests.
 
 #### Example: Malformed JSON
 
-If there is a problem with the request (or another error occurs), a
-`jrpc-handle` will encode a JSON-RPC 2.0 error response. Here's an example.
+If there is a problem with the request (or another error occurs), `jrpc-handle`
+will encode a JSON-RPC 2.0 [error
+response](https://www.jsonrpc.org/specification#error_object). Here's an
+example.
 
 Let's try some malformed JSON:
 
@@ -199,7 +201,7 @@ Let's try some malformed JSON:
 The call to `jrpc-handle`:
 
 ```emacs-lisp
-(jrpc-handle "{Szx. dsd}")
+(jrpc-handle "{Szx. dsd}" '(+))
 ```
 
 Here's what `jrpc-handle` returns:
@@ -212,25 +214,25 @@ Decoded:
 
 ```json
 {
-    "jsonrpc": "2.0",
-    "error": {
-        "code": -32700,
-        "message": "There was an error decoding the request's JSON.",
-        "data": {
-            "underlying-error": {
-                "json-string-format": ["doesn't start with `\"'!"]
-            }
-        }
-    },
-    "id": null
+  "jsonrpc": "2.0",
+  "error": {
+    "code": -32700,
+    "message": "There was an error decoding the request's JSON.",
+    "data": {
+      "underlying-error": {
+        "type": "json-string-format",
+        "data": ["doesn't start with `\"'!"]
+      }
+    }
+  },
+  "id": null
 }
 ```
 
 Note the `"data"` field. Some responses are triggered by an underlying error in
 the Elisp, which may contain more meaningful information about the error. When
-possible, the contents of that error will be returned in the
-`"underlying-error"` field. If there is no underlying error, this field will not
-be present.
+possible, that will be returned in the `"underlying-error"` field. If there is
+no underlying error, this field will not be present.
 
 #### Example: Batch Requests
 
