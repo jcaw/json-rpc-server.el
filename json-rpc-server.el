@@ -174,8 +174,10 @@
 Please note this is not an Emacs error. It's a collection of
 information *about* an error, as laid out in the JSON-RPC 2.0
 protocol, to be included as part of a JSON-RPC 2.0 response."
-  (code :type int)
-  (message :type string)
+  (code nil
+        :type int)
+  (message nil
+           :type string)
   (data nil))
 
 
