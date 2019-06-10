@@ -652,9 +652,9 @@ JSON-RPC 2.0 specification:
      requests will always be processed in the order they are
      supplied. Responses will be supplied in the same order."
   (catch 'jrpc-respond
-    ;; Per JSON-RPC 2.0 specification, requests can either be single requests
-    ;; or a list of requests. We have to handle the request differently
-    ;; depending on which it is, so we have to decode it here.
+    ;; Per JSON-RPC 2.0 specification, requests can either be single requests or
+    ;; a list of requests. Each type has to be handled differently, so we decode
+    ;; it up-front.
     (let* ((decoded-request (jrpc--decode-request-json request-in-json))
            ;; Because JSON objects (dictionaries) will be decoded into alists,
            ;; we can't assume any list is a batch requests. Single requests
