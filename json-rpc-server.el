@@ -470,10 +470,12 @@ Usage example:
   risk that the error will contain data that can't be encoded,
   crashing the JSON serializer.
 
-  We can call this method on the error to protect ourselves. If
-  the error can't be encoded, it will simply be replaced with a
-  message for the end user indicating the problem."
-  ;; TODO: Replace only the base objects, if possible
+  We can call this method on the data in the error to protect
+  ourselves. If some part can't be encoded, it will simply be
+  replaced with a message for the end user indicating the
+  problem."
+  ;; TODO: Replace only the base objects, if possible. Would have to make this
+  ;;   function recursive to do that.
   (condition-case nil
       (progn
         (json-encode object)
