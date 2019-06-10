@@ -229,23 +229,6 @@ list is equivalent to nil, so the empty list counts as nil."
       (eq value json-null)))
 
 
-(defun jrpc--string-to-int (string)
-  "Convert a `STRING' to an int. Return nil if it cannot be converted."
-  (let ((number (ignore-errors
-                  ;; Do not convert the empty string to converted to 0.
-                  (and (not (jrpc-empty-string-p string))
-                       (string-to-number string)))))
-    ;; We don't want to return floats. Only ints. Do not cast floats.
-    (and (integerp number)
-         number)))
-
-
-(defun jrpc-empty-string-p (value)
-  "Is `VALUE' an empty string?"
-  (and (stringp value)
-       (string= value "")))
-
-
 (defun jrpc-alist-get (key alist)
   "Like `alist-get', but works with string keys.
 
