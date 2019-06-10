@@ -48,60 +48,76 @@ messages - it just tests the class of the signal."
     ;; Invalid `jsonrpc' param
     (progn
       ;; jsonrpc is 3.0 - too high
-      (should-error (jrpc--validate-request
-                     '(("jsonrpc" . "3.0")
-                       ("method" . "message")
-                       ("id" . 12456)))
-                    :type 'jrpc-invalid-request)
+      (should (catch 'jrpc-respond
+                (jrpc--validate-request
+                 '(("jsonrpc" . "3.0")
+                   ("method" . "message")
+                   ("id" . 12456))))
+              ;; TODO: Type
+              )
       ;; jsonrpc is 2 - formatted wrong
-      (should-error (jrpc--validate-request
-                     '(("jsonrpc" . "2")
-                       ("method" . "message")
-                       ("id" . 12456)))
-                    :type 'jrpc-invalid-request))
+      (should (catch 'jrpc-respond
+                (jrpc--validate-request
+                 '(("jsonrpc" . "2")
+                   ("method" . "message")
+                   ("id" . 12456))))
+              ;; TODO: Type
+              ))
 
     ;; Invalid `method' param
     (progn
       ;; No method
-      (should-error (jrpc--validate-request
-                     '(("jsonrpc" . "2.0")
-                       ("id" . 12456)))
-                    :type 'jrpc-invalid-request)
+      (should (catch 'jrpc-respond
+                (jrpc--validate-request
+                 '(("jsonrpc" . "2.0")
+                   ("id" . 12456))))
+              ;; TODO: Type
+              )
       ;; Wrong type for method
-      (should-error (jrpc--validate-request
-                     '(("jsonrpc" . "2.0")
-                       ("method" . 120983)
-                       ("id" . 12456)))
-                    :type 'jrpc-invalid-request))
+      (should (catch 'jrpc-respond
+                (jrpc--validate-request
+                 '(("jsonrpc" . "2.0")
+                   ("method" . 120983)
+                   ("id" . 12456))))
+              ;; TODO: Type
+              ))
 
     ;; Invalid `params' param
     (progn
-      (should-error (jrpc--validate-request
-                     '(("jsonrpc" . "2.0")
-                       ("method" . "message")
-                       ("params" . "Just a string param")
-                       ("id" . 12456)))
-                    :type 'jrpc-invalid-request))
+      (should (catch 'jrpc-respond
+                (jrpc--validate-request
+                 '(("jsonrpc" . "2.0")
+                   ("method" . "message")
+                   ("params" . "Just a string param")
+                   ("id" . 12456))))
+              ;; TODO: Type
+              ))
 
     ;; Invalid `id' param
     (progn
       ;; No id
-      (should-error (jrpc--validate-request
-                     '(("jsonrpc" . "2.0")
-                       ("method" . "message")))
-                    :type 'jrpc-invalid-request)
+      (should (catch 'jrpc-respond
+                (jrpc--validate-request
+                 '(("jsonrpc" . "2.0")
+                   ("method" . "message"))))
+              ;; TODO: type
+              )
       ;; Invalid id type - in this case, a list.
-      (should-error (jrpc--validate-request
-                     '(("jsonrpc" . "2.0")
-                       ("method" . "message")
-                       ("id" . ["this is a list"])))
-                    :type 'jrpc-invalid-request)
+      (should (catch 'jrpc-respond
+                (jrpc--validate-request
+                 '(("jsonrpc" . "2.0")
+                   ("method" . "message")
+                   ("id" . ["this is a list"]))))
+              ;; TODO: Type
+              )
       ;; Id is null.
-      (should-error (jrpc--validate-request
-                     '(("jsonrpc" . "2.0")
-                       ("method" . "message")
-                       ("id" . :json-null)))
-                    :type 'jrpc-invalid-request))
+      (should (catch 'jrpc-respond
+                (jrpc--validate-request
+                 '(("jsonrpc" . "2.0")
+                   ("method" . "message")
+                   ("id" . :json-null))))
+              ;; TODO: Type
+              ))
     )
 
   (ert-deftest test-jrpc--decode-request-json ()
@@ -132,10 +148,12 @@ only tests the additional conditions imposed by the
                      ("index2" . "value2"))))
 
     ;; Malformed json should raise a specific error, so it can be caught.
-    (should-error (jrpc--decode-request-json
-                   ;; Some malformed JSON input.
-                   "als;d'asfoasf")
-                  :type 'jrpc-invalid-request-json)
+    (should (catch 'jrpc-respond
+              (jrpc--decode-request-json
+               ;; Some malformed JSON input.
+               "als;d'asfoasf"))
+            ;; TODO: Type (invalid json)
+            )
 
     ;; Try decoding a full request
     (should (equal
