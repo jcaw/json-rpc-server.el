@@ -207,8 +207,10 @@ is not always possible, so this parameter is optional."
              ;; we always count on the underlying error having a `car'
              ;; and a `cdr'?
              `((underlying-error . ((type . ,(car underlying-error))
-                                    (data . ,(jrpc--replace-unencodable-object
-                                              (cdr underlying-error)))))))))
+                                    ;; The data should be a list, since it's a
+                                    ;; `cdr'. Encode as much of it as we can.
+                                    (data . ,(mapcar 'jrpc--replace-unencodable-object
+                                                     (cdr underlying-error)))))))))
     (json-encode
      ;; The id will be added later.
      `(("jsonrpc" . "2.0")
