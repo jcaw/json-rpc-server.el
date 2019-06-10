@@ -656,16 +656,17 @@ JSON-RPC 2.0 specification:
     ;; a list of requests. Each type has to be handled differently, so we decode
     ;; it up-front.
     (let* ((decoded-request (jrpc--decode-request-json request-in-json))
-           ;; Because JSON objects (dictionaries) will be decoded into alists,
-           ;; we can't assume any list is a batch requests. Single requests
-           ;; will also look like lists. Instead, ensure the request is a list
-           ;; *and* not a dictionary.
-           ;;
-           ;; If the request is an empty list (or null), we just process it
-           ;; like a normal request.
-           (is-batch-request (and (not (jrpc-null-p decoded-request))
-                                  (listp decoded-request)
-                                  (not (json-alist-p decoded-request)))))
+           ;; Because JSON objects (i.e. dictionaries) will be decoded into
+           ;; alists, we can't just assume lists are batch requests. Single
+           ;; requests will also look like lists. Instead, ensure the request is
+           ;; a list *and* not a dictionary.
+           (is-batch-request (and
+                              ;; If the request is an empty list (or null), we
+                              ;; can't iterate over it. We have to process it
+                              ;; as a single request.
+                              (not (jrpc-null-p decoded-request))
+                              (listp decoded-request)
+                              (not (json-alist-p decoded-request)))))
       (if is-batch-request
           ;; Process each request in turn; Return an array of each process'
           ;; result, as a string.
