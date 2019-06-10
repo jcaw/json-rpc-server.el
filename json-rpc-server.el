@@ -505,9 +505,9 @@ decoded from JSON into an alist form."
 
 
 (defun jrpc--decode-id (request-in-json)
-  "Attempt to decode the id from a JSON request and NOTHING ELSE.
+  "Attempt to decode a valid id from a JSON request and NOTHING ELSE.
 
-If no id could be decoded, returns nil.
+If no valid id could be decoded, returns nil.
 
 This method will not raise errors.
 
