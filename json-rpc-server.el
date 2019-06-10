@@ -520,15 +520,8 @@ JSON form."
 (defun jrpc-unknown-error-response (&optional request-in-json)
   "Construct a JSON response indicating an unknown error.
 
-This is a utility method for the transport layer to use in a
-protected form. For example, let's say the transport layer
-invokes a function that triggers an error and debugging is
-enabled. The error will not be caught - it will invoke the
-debugger.
-
-To adhere to the JSON-RPC 2.0 protocol, the transport layer
-could (for example) implement a protected form that responds with
-an unknown error before the error is raised to the debugger.
+This is a utility method for the transport layer to use when it
+wishes to send a JSON-RPC 2.0 error without knowing any details.
 
 If possible, please supply this method with the original JSON-RPC
 request, as a JSON string, in `REQUEST-IN-JSON'. It will be used
