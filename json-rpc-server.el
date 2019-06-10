@@ -356,7 +356,7 @@ thrown. Ensure these signals are caught."
     (unless id
       (jrpc--throw-invalid-request "`id` not provided"))
     ;; "id" can be a string or a number. Floats are allowed, which seems odd
-    ;; given rounding errors.
+    ;; given the potential for rounding errors.
     (unless (or (numberp id)
                 (stringp id))
       (jrpc--throw-invalid-request "`id` should be an integer."))
