@@ -349,7 +349,7 @@ thrown. Ensure these signals are caught."
     ;; allow a nil value.
     (unless (or (jrpc-null-p params)
                 (listp params))
-      ;; TODO: Should this be a jrpc-invalid-params-error?
+      ;; TODO: Should this be a JSON-RPC "invalid params" error?
       (jrpc--throw-invalid-request
        (concat "`params` was provided, but it was not an array. Could "
                "not decode the parameters into a list.")))
