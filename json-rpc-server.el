@@ -251,7 +251,7 @@ worrying about broader behavior."
 
 (defun jrpc--call-function (func args)
   "Execute the remote procedure call for `FUNC' with `ARGS'."
-  ;; TODO: Should we allow macro calls here too?
+  ;; TODO: Allow macro calls here too?
   (condition-case err
       (jrpc--call-function-internal func args)
     (error
