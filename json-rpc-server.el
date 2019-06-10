@@ -137,9 +137,10 @@ Arguments:
   (let* (
          ;; The additional data should be an alist of additional data keys to
          ;; their data.
+         ;;
+         ;; Additional data should *only* have a value when additional data exists.
+         ;; It should be null otherwise.
          (additional-data nil))
-    ;; Additional data should *only* have a value when additional data exists.
-    ;; It should be null otherwise.
     (when underlying-error
       (setq additional-data
             (append
