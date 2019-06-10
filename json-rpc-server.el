@@ -121,14 +121,19 @@ should a subclass of `jrpc-procedural-error'."
 The result will be a JSON-RPC 2.0 response string, containing
 information about the error.
 
-`JRPC-ERROR' is assumed to be the error raised during the
-processing of a JSON-RPC request. It needs to be a subclass of
-`jrpc-procedural-error', raised with
-`jrpc--raise-procedural-error', to ensure it has the information
-and structure necessary to encode it into a response.
+This method does not include an `id' in the response. The id must
+be added before this response is actually returned.
 
-`ID' should be the id of the original request. Extracting an id
-is not always possible, so this parameter is optional."
+Arguments:
+
+`ERROR-CODE' - The error code to respond with.
+
+`MESSAGE' - The message to send.
+
+`UNDERLYING-ERROR' - Optional. You may wish to add an underlying
+  Elisp error to the response, for example if there was a problem
+  executing the supplied method. Pass it here and it will be
+  encoded and attached. Default: nil"
   (let* (
          ;; The additional data should be an alist of additional data keys to
          ;; their data.
