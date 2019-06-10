@@ -369,10 +369,9 @@ thrown. Ensure these signals are caught."
 Arrays will be decoded into lists, objects (dictionaries) will be
 decoded into alists, and keys will be decoded into symbols.
 
-If there is an error parsing the JSON, a
-`jrpc-invalid-request-json' error will be raised. This can be
-converted into a JSON-RPC response with
-`jrpc--encode-error-response'."
+If there is an error parsing the JSON, a response will be thrown
+indicating that the request had invalid json. Ensure this
+response is caught."
   ;; Decode symbol-like strings into symbols. Do this as part of the JSON
   ;; parsing process.
   (jrpc--replace-symbol-strings
