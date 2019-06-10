@@ -548,8 +548,10 @@ Usage example:
         (json-encode object)
         object)
     (error
-     (concat "The object in this position could not be encoded into JSON. "
-             "This string was inserted instead."))))
+     (format
+      (concat "[Object of type %s could not be encoded into JSON. "
+              "This string was inserted instead.]")
+      (type-of object)))))
 
 
 (defun jrpc--extract-id (decoded-request)
