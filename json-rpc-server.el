@@ -5,7 +5,7 @@
 ;; Author: GitHub user "Jcaw"
 ;; URL: https://github.com/jcaw/json-rpc-server.el
 ;; Keywords: tools, comm, json
-;; Version: 0.1.0
+;; Version: 0.1.1
 ;; Package-Requires: ((emacs "26"))
 
 ;; This program is free software; you can redistribute it and/or modify
