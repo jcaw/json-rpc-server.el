@@ -159,12 +159,13 @@ Arguments:
 
 
 (cl-defun jrpc--throw-error-response (error-code message &key (original-error nil))
-  "Throw a `jrpc-response' signal, with an encoded error response attached."
+  "Throw a `jrpc-respond' signal, with an encoded error response attached."
   (throw 'jrpc-respond
          (jrpc--encode-error-response error-code message original-error)))
 
 
 (cl-defun jrpc--throw-invalid-json (message &key (original-error nil))
+  "Throw a `jrpc-response' with a \"malformed JSON\" error code."
   (jrpc--throw-error-response
    (jrpc--get-error-code 'jrpc-invalid-request-json)
    message
@@ -172,18 +173,21 @@ Arguments:
 
 
 (defun jrpc--throw-invalid-request (message)
+  "Throw a `jrpc-response' with an \"invalid request\" error code."
   (jrpc--throw-error-response
    (jrpc--get-error-code 'jrpc-invalid-request)
    message))
 
 
 (defun jrpc--throw-invalid-function (message)
+  "Throw a `jrpc-response' with an \"invalid function\" error code."
   (jrpc--throw-error-response
    (jrpc--get-error-code 'jrpc-invalid-function)
    message))
 
 
 (defun jrpc--throw-error-calling-method (message &key original-error)
+  "Throw a `jrpc-response' with an \"internal error\" error code."
   (jrpc--throw-error-response
    (jrpc--get-error-code 'jrpc-error-calling-method)
    message
@@ -191,6 +195,7 @@ Arguments:
 
 
 (defun jrpc--throw-result (result)
+  "Throw a `jrpc-response' with a successful result attached."
   (throw 'jrpc-respond (jrpc--encode-result-response result)))
 
 
