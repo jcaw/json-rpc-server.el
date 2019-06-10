@@ -205,8 +205,8 @@ Arguments:
 `RESULT' should be the raw result data returned by the procedure
 invoked.
 
-`ID' should be the id in the original JSON-RPC request, so the
-response can be synchronized to it."
+This method does not attach an \"id\" to the response. The id
+should be added before this response is returned to a client."
   ;; TODO: Handle errors encoding the result. If that happens, the response
   ;; should be a new JSON-RPC error defined by this API to indicate that the
   ;; response could not be encoded.
