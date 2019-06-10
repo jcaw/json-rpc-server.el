@@ -241,8 +241,11 @@ list is equivalent to nil, so the empty list counts as nil."
 
 
 (defun jrpc--call-function-internal (func args)
-  ""
-  ;; TODO: add docstring
+  "Apply `FUNC' to `ARGS'.
+
+This wrapper is abstracted from `jrpc--call-function' to make it
+easier for developers to debug function calls themselves, without
+worrying about broader behavior."
   (apply func args))
 
 
