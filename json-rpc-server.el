@@ -543,6 +543,7 @@ Usage example:
   We can call this method on the error to protect ourselves. If
   the error can't be encoded, it will simply be replaced with a
   message for the end user indicating the problem."
+  ;; TODO: Replace only the base objects, if possible
   (condition-case nil
       (progn
         (json-encode object)
