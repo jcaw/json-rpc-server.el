@@ -301,7 +301,7 @@ exist (or has not been exposed.)"
       (jrpc--throw-invalid-function
        "This symbol has been exposed, but it is not a function. Cannot call it."))
     ;; TODO: Check if function is callable with args. Can the function signature
-    ;; be checked?
+    ;;   be checked in Elisp?
     (jrpc--call-function method-symbol args)))
 
 
