@@ -145,9 +145,6 @@ Arguments:
       (setq additional-data
             (append
              additional-data
-             ;; TODO: Should we handle weird error structures here? Can
-             ;; we always count on the underlying error having a `car'
-             ;; and a `cdr'?
              `((underlying-error . ((type . ,(car underlying-error))
                                     ;; The data should be a list, since it's a
                                     ;; `cdr'. Encode as much of it as we can.
