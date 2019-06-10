@@ -585,8 +585,10 @@ response."
      id)))
 
 
-  "Add an id to a JSON-RPC response."
 (defun jrpc--ammend-id (id response)
+  "Add an \"id\" to a JSON-RPC response.
+
+`ID' should be the id. `RESPONSE' should be the response."
   (json-encode
    (append
     (json-read-from-string
