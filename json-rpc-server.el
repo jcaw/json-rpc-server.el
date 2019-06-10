@@ -308,10 +308,11 @@ exist (or has not been exposed.)"
 (defun jrpc--validate-request (request-alist)
   "Validate that a decoded request has the correct structure.
 
-The request should be provided in the form of an alist.
-`REQUEST-ALIST' is the request.
+The request should be provided in the form of an alist, in
+`REQUEST-ALIST'.
 
-Relevant errors will be raised if the request is invalid."
+If the request is invalid, an error response signal will be
+thrown. Ensure these signals are caught."
   (when (jrpc-null-p request-alist)
     (jrpc--throw-invalid-request "No request provided"))
   (unless (json-alist-p request-alist)
