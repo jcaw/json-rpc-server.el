@@ -488,9 +488,10 @@ Usage example:
 
 
 (defun jrpc--extract-id (decoded-request)
-  "Attempt to extract the ID from a request alist and NOTHING ELSE.
+  "Attempt to extract a valid ID from a request alist and NOTHING ELSE.
 
-If no ID could be extracted, returns nil.
+If no valid ID could be extracted, returns nil. Valid IDs are
+numbers and strings.
 
 This method will not raise errors.
 
