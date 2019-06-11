@@ -159,13 +159,25 @@ Arguments:
 
 
 (cl-defun jrpc--throw-error-response (error-code message &key (original-error nil))
-  "Throw a `jrpc-respond' signal, with an encoded error response attached."
+  "Throw a `jrpc-respond' signal, with an encoded error response attached.
+
+`MESSAGE' - the error message to attach.
+
+`:ORIGINAL-ERROR' - Optional. The original error that was thrown.
+  Information about this error will be sent back in the
+  response."
   (throw 'jrpc-respond
          (jrpc--encode-error-response error-code message original-error)))
 
 
 (cl-defun jrpc--throw-invalid-json (message &key (original-error nil))
-  "Throw a `jrpc-response' with a \"malformed JSON\" error code."
+  "Throw a `jrpc-response' with a \"malformed JSON\" error code.
+
+`MESSAGE' - the error message to attach.
+
+`:ORIGINAL-ERROR' - Optional. The original error that was thrown.
+  Information about this error will be sent back in the
+  response."
   (jrpc--throw-error-response
    (jrpc--get-error-code 'jrpc-invalid-request-json)
    message
