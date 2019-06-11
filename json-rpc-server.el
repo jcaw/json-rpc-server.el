@@ -112,14 +112,19 @@ should a subclass of `jrpc-procedural-error'."
       jrpc--unknown-error-code))
 
 
-(defun jrpc--encode-error-response (error-code
+(defun jrpc--construct-error-response (error-code
                                     message
                                     &optional
                                     underlying-error)
   "Encode a `jrpc-procedural-error' into a JSON-RPC 2.0 error response.
 
 The result will be a JSON-RPC 2.0 response string, containing
-information about the error.
+information about the error. For example:
+
+`((\"jsonrpc\" . \"2.0\")
+  (\"error\" . ((code . -32600)
+                (message . \"This is an error.\")
+                (data . [...]))))
 
 This method does not include an `id' in the response. The id must
 be added before this response is actually returned.
@@ -150,12 +155,11 @@ Arguments:
                                     ;; `cdr'. Encode as much of it as we can.
                                     (data . ,(mapcar 'jrpc--replace-unencodable-object
                                                      (cdr underlying-error)))))))))
-    (json-encode
-     ;; The id will be added later.
-     `(("jsonrpc" . "2.0")
-       ("error" . ((code . ,error-code)
-                   (message . ,message)
-                   (data . ,additional-data)))))))
+    ;; The id will be added later.
+    `(("jsonrpc" . "2.0")
+      ("error" . ((code . ,error-code)
+                  (message . ,message)
+                  (data . ,additional-data))))))
 
 
 (cl-defun jrpc--throw-error-response (error-code message &key (original-error nil))
@@ -167,7 +171,7 @@ Arguments:
   Information about this error will be sent back in the
   response."
   (throw 'jrpc-respond
-         (jrpc--encode-error-response error-code message original-error)))
+         (jrpc--construct-error-response error-code message original-error)))
 
 
 (cl-defun jrpc--throw-invalid-json (message &key (original-error nil))
@@ -220,14 +224,19 @@ Arguments:
   "Throw a `jrpc-response' with a successful result attached.
 
 `RESULT' should be the raw result of the method execution."
-  (throw 'jrpc-respond (jrpc--encode-result-response result)))
+  (throw 'jrpc-respond (jrpc--construct-result-response result)))
 
 
-(defun jrpc--encode-result-response (result)
+(defun jrpc--construct-result-response (result)
   "Create a JSON-RPC 2.0 response with a successful result.
 
 `RESULT' should be the raw result data returned by the procedure
 invoked.
+
+Example output:
+
+'((\"jsonrpc\" . \"2.0\")
+  (\"result\"  . 6))
 
 This method does not attach an \"id\" to the response. The id
 should be added before this response is returned to a client."
@@ -236,9 +245,8 @@ should be added before this response is returned to a client."
   ;; response could not be encoded.
   ;;
   ;; The id will be added later
-  (json-encode
-   `(("jsonrpc" . "2.0")
-     ("result" . ,result))))
+  `(("jsonrpc" . "2.0")
+    ("result" . ,result)))
 
 
 ;; --------------------------------------------------------------------------
@@ -601,12 +609,9 @@ response."
 (defun jrpc--ammend-id (id response)
   "Add an \"id\" to a JSON-RPC response.
 
-`ID' should be the id. `RESPONSE' should be the response."
-  (json-encode
-   (append
-    (json-read-from-string
-     response)
-    `((id . ,id)))))
+`ID' should be the id. `RESPONSE' should be the raw response,
+before it's encoded into a string."
+  (append response `((id . ,id))))
 
 
 (defun jrpc--handle-single (decoded-request exposed-functions)
@@ -631,7 +636,7 @@ Returns the JSON-RPC response, encoded in JSON."
       (jrpc--ammend-id
        id
        (catch 'jrpc-respond
-         (jrpc--encode-result-response
+         (jrpc--construct-result-response
           (jrpc--execute-request
            (jrpc--validate-request decoded-request)
            exposed-functions))))))
@@ -679,7 +684,8 @@ JSON-RPC 2.0 specification:
   2. Batch requests are not processed concurrently. Batch
      requests will always be processed in the order they are
      supplied. Responses will be supplied in the same order."
-  (catch 'jrpc-respond
+  (json-encode
+   (catch 'jrpc-respond
     ;; Per JSON-RPC 2.0 specification, requests can either be single requests or
     ;; a list of requests. Each type has to be handled differently, so we decode
     ;; it up-front.
@@ -696,19 +702,12 @@ JSON-RPC 2.0 specification:
                               (listp decoded-request)
                               (not (json-alist-p decoded-request)))))
       (if is-batch-request
-          ;; Process each request in turn; Return an array of each process'
-          ;; result, as a string.
-          ;;
-          ;; HACK: Because each request returns a JSON-encoded response, we
-          ;; have to decode them before joining them together.
-          (json-encode
-           (mapcar 'json-read-from-string
-                   (mapcar (lambda (request)
-                             (jrpc--handle-single request
-                                                  exposed-functions))
-                           decoded-request)))
-        (jrpc--handle-single decoded-request
-                             exposed-functions)))))
+          ;; Process each request in turn; Return all the results, in a list.
+          (mapcar (lambda (request)
+                    "Handle a single request from the batch"
+                    (jrpc--handle-single request exposed-functions))
+                  decoded-request)
+        (jrpc--handle-single decoded-request exposed-functions))))))
 
 
 (provide 'json-rpc-server)
