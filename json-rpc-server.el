@@ -185,7 +185,9 @@ Arguments:
 
 
 (defun jrpc--throw-invalid-request (message)
-  "Throw a `jrpc-response' with an \"invalid request\" error code."
+  "Throw a `jrpc-response' with an \"invalid request\" error code.
+
+`MESSAGE' is the error message to attach."
   (jrpc--throw-error-response
    (jrpc--get-error-code 'jrpc-invalid-request)
    message))
