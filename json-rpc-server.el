@@ -428,6 +428,9 @@ response is caught."
 (defun jrpc--replace-symbol-strings (object)
   "Replace symbol-like strings with symbols.
 
+`OBJECT' is the decoded JSON object you want to modify. It should
+be composed of only the basic JSON types, decoded into Elisp.
+
 This is a hack that allows symbols (most importantly, keyword
 arguments) to be sent over the JSON-RPC protocol. It takes
 strings prefixed with a single \"'\" or \":\", and converts them
