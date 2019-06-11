@@ -202,8 +202,8 @@ Arguments:
    message))
 
 
-(defun jrpc--throw-error-calling-method (message &key original-error)
   "Throw a `jrpc-response' with an \"internal error\" error code."
+(cl-defun jrpc--throw-error-calling-method (message &key original-error)
   (jrpc--throw-error-response
    (jrpc--get-error-code 'jrpc-error-calling-method)
    message
