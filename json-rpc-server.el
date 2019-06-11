@@ -445,7 +445,8 @@ example:
 
   \"'a quote'\" -> \"'a quote'\"
 
-This method replaces the symbols inline in the request structure. The structure itself will be modified.
+This method replaces the symbols inline in the request structure.
+The structure itself will be modified.
 
 This is a recursive function. It will call itself. Ensure
 `max-lisp-eval-depth' is high enough to parse your JSON object."
