@@ -510,8 +510,8 @@ Usage example:
   ourselves. If some part can't be encoded, it will simply be
   replaced with a message for the end user indicating the
   problem."
-  ;; TODO: Replace only the base objects, if possible. Would have to make this
-  ;;   function recursive to do that.
+  ;; TODO: Replace only the lowest-level objects, if possible. Would have to
+  ;;   make this function recursive to do that.
   (condition-case nil
       (progn
         (json-encode object)
