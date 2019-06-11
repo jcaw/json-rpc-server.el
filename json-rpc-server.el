@@ -194,7 +194,9 @@ Arguments:
 
 
 (defun jrpc--throw-invalid-function (message)
-  "Throw a `jrpc-response' with an \"invalid function\" error code."
+  "Throw a `jrpc-response' with an \"invalid function\" error code.
+
+`MESSAGE' is the error message to attach."
   (jrpc--throw-error-response
    (jrpc--get-error-code 'jrpc-invalid-function)
    message))
