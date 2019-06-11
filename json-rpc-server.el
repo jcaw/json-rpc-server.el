@@ -217,7 +217,9 @@ Arguments:
 
 
 (defun jrpc--throw-result (result)
-  "Throw a `jrpc-response' with a successful result attached."
+  "Throw a `jrpc-response' with a successful result attached.
+
+`RESULT' should be the raw result of the method execution."
   (throw 'jrpc-respond (jrpc--encode-result-response result)))
 
 
