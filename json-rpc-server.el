@@ -202,8 +202,14 @@ Arguments:
    message))
 
 
-  "Throw a `jrpc-response' with an \"internal error\" error code."
 (cl-defun jrpc--throw-error-calling-method (message &key original-error)
+  "Throw a `jrpc-response' with an \"internal error\" error code.
+
+`MESSAGE' is the error message to attach.
+
+`:ORIGINAL-ERROR' - The original error that was thrown.
+  Information about this error will be sent back in the
+  response."
   (jrpc--throw-error-response
    (jrpc--get-error-code 'jrpc-error-calling-method)
    message
