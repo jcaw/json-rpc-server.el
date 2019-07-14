@@ -1,7 +1,7 @@
 ;;; test-helper.el --- Helpers for json-rpc-server-test.el
 
 
-(defun jrpc--structs-equal (instance1 instance2)
+(defun json-rpc-server--structs-equal (instance1 instance2)
   "Compare two structs. Are they equal?
 
 Equality here means all of the following are true:

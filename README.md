@@ -63,14 +63,14 @@ protocol.
 
 ## How it Works
 
-`jrpc-handle` is the main entry point into the package (functions in this
-package are prefixed with `jrpc-`). `jrpc-handle` takes a JSON-RPC 2.0 [request
+`json-rpc-server-handle` is the main entry point into the package (functions in this
+package are prefixed with `json-rpc-server-`). `json-rpc-server-handle` takes a JSON-RPC 2.0 [request
 string](https://www.jsonrpc.org/specification#request_object), and a list of
 functions that are allowed to be called remotely.
 
 ```emacs-lisp
 ;; This will decode a JSON-RPC 2.0 request, execute it, and return the JSON-RPC 2.0 response.
-(jrpc-handle string-encoded-json-rpc-request
+(json-rpc-server-handle string-encoded-json-rpc-request
              list-of-legal-functions)
 ```
 
@@ -82,7 +82,7 @@ captured and encoded into strings - they won't be raised above the handler
 (unless you are debugging).
 
 Only functions you have specifically exposed can be called via RPC. You must
-pass a list of functions to `jrpc-handle` so it knows which functions it's
+pass a list of functions to `json-rpc-server-handle` so it knows which functions it's
 allowed to execute, and which it is not.
 
 ### Examples
@@ -103,10 +103,10 @@ Here's an example request:
 }
 ```
 
-Let's encode this into a string and pass it to `jrpc-handle`:
+Let's encode this into a string and pass it to `json-rpc-server-handle`:
 
 ```emacs-lisp
-(jrpc-handle
+(json-rpc-server-handle
  "{
     \"jsonrpc\": \"2.0\",
     \"method\": \"+\",
@@ -118,7 +118,7 @@ Let's encode this into a string and pass it to `jrpc-handle`:
 ```
 
 `json-rpc-server` will decode the request, then apply the function `+` to the
-list `'(1 2 3)`. Here's what the result of `jrpc-handle` will be:
+list `'(1 2 3)`. Here's what the result of `json-rpc-server-handle` will be:
 
 ```emacs-lisp
 "{\"jsonrpc\":\"2.0\",\"result\":6,\"id\":29492}"
@@ -150,10 +150,10 @@ This time, let's try an invalid request.
 }
 ```
 
-This request is invalid because it has no `"method"`. The call to `jrpc-handle`:
+This request is invalid because it has no `"method"`. The call to `json-rpc-server-handle`:
 
 ```emacs-lisp
-(jrpc-handle
+(json-rpc-server-handle
  "{
     \"params\": [1, 2, 3],
     \"id\": 23092
@@ -161,7 +161,7 @@ This request is invalid because it has no `"method"`. The call to `jrpc-handle`:
  '(+))
 ```
 
-Here's what `jrpc-handle` returns:
+Here's what `json-rpc-server-handle` returns:
 
 ```emacs-lisp
 "{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32600,\"message\":\"`method` was not provided.'\",\"data\":null},\"id\":23092}"
@@ -181,13 +181,13 @@ Decoded:
 }
 ```
 
-Note the `"id"` field. `jrpc-handle` will do its best to extract an `id` from all
+Note the `"id"` field. `json-rpc-server-handle` will do its best to extract an `id` from all
 requests, even invalid requests, so errors can be synced up to their respective
 requests.
 
 #### Example: Malformed JSON
 
-If there is a problem with the request (or another error occurs), `jrpc-handle`
+If there is a problem with the request (or another error occurs), `json-rpc-server-handle`
 will encode a JSON-RPC 2.0 [error
 response](https://www.jsonrpc.org/specification#error_object). Here's an
 example.
@@ -198,13 +198,13 @@ Let's try some malformed JSON:
 {Szx. dsd}
 ```
 
-The call to `jrpc-handle`:
+The call to `json-rpc-server-handle`:
 
 ```emacs-lisp
-(jrpc-handle "{Szx. dsd}" '(+))
+(json-rpc-server-handle "{Szx. dsd}" '(+))
 ```
 
-Here's what `jrpc-handle` returns:
+Here's what `json-rpc-server-handle` returns:
 
 ```emacs-lisp
 "{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32700,\"message\":\"There was an error decoding the request's JSON.\",\"data\":{\"underlying-error\":{\"json-string-format\":[\"doesn't start with `\\\"'!\"]}}},\"id\":null}"
@@ -262,10 +262,10 @@ batch them.
 ]
 ```
 
-The call to `jrpc-handle`:
+The call to `json-rpc-server-handle`:
 
 ```emacs-lisp
-(jrpc-handle
+(json-rpc-server-handle
  "[
     {
         \"jsonrpc\": \"2.0\",
@@ -284,7 +284,7 @@ The call to `jrpc-handle`:
  '(+))
 ```
 
-Here's what `jrpc-handle` returns:
+Here's what `json-rpc-server-handle` returns:
 
 ```emacs-lisp
 "[{\"jsonrpc\":\"2.0\",\"result\":6,\"id\":1},{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32601,\"message\":\"Function has not been exposed (it may or may not exist). Cannot execute.\",\"data\":null},\"id\":2}]"
@@ -315,8 +315,8 @@ As you can see, one of the function calls executed successfully, another caused
 an error. The responses should be returned in the same order their requests were
 submitted, but they can also be synchronized based on their `"id"`.
 
-`jrpc-handle` assumes that requests are atomic until proven otherwise. If your
-batch request is *malformed*, `jrpc-handle` will probably not return a batch in
+`json-rpc-server-handle` assumes that requests are atomic until proven otherwise. If your
+batch request is *malformed*, `json-rpc-server-handle` will probably not return a batch in
 response - it will respond with a single "malformed json" error.
 
 ## Datatype Limitations
@@ -420,7 +420,7 @@ Here's how to encode that in a JSON-RPC call:
 }
 ```
 
-This would be encoded into a string and passed to `jrpc-handle`. It will decode a function call similar to the following:
+This would be encoded into a string and passed to `json-rpc-server-handle`. It will decode a function call similar to the following:
 
 ```emacs-lisp
 (apply

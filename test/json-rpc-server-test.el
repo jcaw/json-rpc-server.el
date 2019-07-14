@@ -9,8 +9,8 @@
 ;; Unit tests
 (progn
   ;; TODO: Find how to organize Elisp tests hierarchically.
-  (ert-deftest test-jrpc--validate-request ()
-    "Test for `jrpc--validate-request'.
+  (ert-deftest test-json-rpc-server--validate-request ()
+    "Test for `json-rpc-server--validate-request'.
 
 Test whether it accepts good requests, and raises the
 correct errors for flawed requests.
@@ -25,22 +25,22 @@ messages - it just tests the class of the signal."
                      ("params" . ("This is a %s"
                                   "test message"))
                      ("id" . 12456))))
-      (should (equal (jrpc--validate-request request)
+      (should (equal (json-rpc-server--validate-request request)
                      request)))
     ;; Valid request, but it's jsonrpc 1.0
-    (should (jrpc--validate-request
+    (should (json-rpc-server--validate-request
              '(("method" . "message")
                ("params" . ("This is a %s"
                             "test message"))
                ("id" . 12456))))
     ;; Valid request, but there's no params.
-    (should (jrpc--validate-request
+    (should (json-rpc-server--validate-request
              '(("jsonrpc" . "2.0")
                ("method" . "message")
                ("id" . 12456))))
 
     ;; This time, the id is a string.
-    (should (jrpc--validate-request
+    (should (json-rpc-server--validate-request
              '(("jsonrpc" . "2.0")
                ("method" . "message")
                ("id" . "b48297ce-8e07-4e72-b487-4d06b45cdf52"))))
@@ -48,16 +48,16 @@ messages - it just tests the class of the signal."
     ;; Invalid `jsonrpc' param
     (progn
       ;; jsonrpc is 3.0 - too high
-      (should (catch 'jrpc-respond
-                (jrpc--validate-request
+      (should (catch 'json-rpc-server-respond
+                (json-rpc-server--validate-request
                  '(("jsonrpc" . "3.0")
                    ("method" . "message")
                    ("id" . 12456))))
               ;; TODO: Type
               )
       ;; jsonrpc is 2 - formatted wrong
-      (should (catch 'jrpc-respond
-                (jrpc--validate-request
+      (should (catch 'json-rpc-server-respond
+                (json-rpc-server--validate-request
                  '(("jsonrpc" . "2")
                    ("method" . "message")
                    ("id" . 12456))))
@@ -67,15 +67,15 @@ messages - it just tests the class of the signal."
     ;; Invalid `method' param
     (progn
       ;; No method
-      (should (catch 'jrpc-respond
-                (jrpc--validate-request
+      (should (catch 'json-rpc-server-respond
+                (json-rpc-server--validate-request
                  '(("jsonrpc" . "2.0")
                    ("id" . 12456))))
               ;; TODO: Type
               )
       ;; Wrong type for method
-      (should (catch 'jrpc-respond
-                (jrpc--validate-request
+      (should (catch 'json-rpc-server-respond
+                (json-rpc-server--validate-request
                  '(("jsonrpc" . "2.0")
                    ("method" . 120983)
                    ("id" . 12456))))
@@ -84,8 +84,8 @@ messages - it just tests the class of the signal."
 
     ;; Invalid `params' param
     (progn
-      (should (catch 'jrpc-respond
-                (jrpc--validate-request
+      (should (catch 'json-rpc-server-respond
+                (json-rpc-server--validate-request
                  '(("jsonrpc" . "2.0")
                    ("method" . "message")
                    ("params" . "Just a string param")
@@ -96,23 +96,23 @@ messages - it just tests the class of the signal."
     ;; Invalid `id' param
     (progn
       ;; No id
-      (should (catch 'jrpc-respond
-                (jrpc--validate-request
+      (should (catch 'json-rpc-server-respond
+                (json-rpc-server--validate-request
                  '(("jsonrpc" . "2.0")
                    ("method" . "message"))))
               ;; TODO: type
               )
       ;; Invalid id type - in this case, a list.
-      (should (catch 'jrpc-respond
-                (jrpc--validate-request
+      (should (catch 'json-rpc-server-respond
+                (json-rpc-server--validate-request
                  '(("jsonrpc" . "2.0")
                    ("method" . "message")
                    ("id" . ["this is a list"]))))
               ;; TODO: Type
               )
       ;; Id is null.
-      (should (catch 'jrpc-respond
-                (jrpc--validate-request
+      (should (catch 'json-rpc-server-respond
+                (json-rpc-server--validate-request
                  '(("jsonrpc" . "2.0")
                    ("method" . "message")
                    ("id" . :json-null))))
@@ -120,21 +120,21 @@ messages - it just tests the class of the signal."
               ))
     )
 
-  (ert-deftest test-jrpc--decode-request-json ()
-    "Test for `jrpc--decode-request-json'.
+  (ert-deftest test-json-rpc-server--decode-request-json ()
+    "Test for `json-rpc-server--decode-request-json'.
 
 Test whether it decodes json correctly, in the way I want.
 
 Note that this does not test the functionality of `json.el'. It
 only tests the additional conditions imposed by the
-`jrpc--decode-request-json' method."
+`json-rpc-server--decode-request-json' method."
     ;; List decoding
     (progn
       ;; Simple members
-      (should (equal (jrpc--decode-request-json
+      (should (equal (json-rpc-server--decode-request-json
                       "[1, 2, 3]")
                      '(1 2 3)))
-      (should (equal (jrpc--decode-request-json
+      (should (equal (json-rpc-server--decode-request-json
                       "[\"first\", \"second\", \"third\"]")
                      '("first" "second" "third"))))
 
@@ -142,14 +142,14 @@ only tests the additional conditions imposed by the
     ;;
     ;; Indexes should be strings, not symbols, and the result should be an
     ;; alist.
-    (should (equal (jrpc--decode-request-json
+    (should (equal (json-rpc-server--decode-request-json
                     "{\"index1\": \"value1\", \"index2\": \"value2\"}")
                    '(("index1" . "value1")
                      ("index2" . "value2"))))
 
     ;; Malformed json should raise a specific error, so it can be caught.
-    (should (catch 'jrpc-respond
-              (jrpc--decode-request-json
+    (should (catch 'json-rpc-server-respond
+              (json-rpc-server--decode-request-json
                ;; Some malformed JSON input.
                "als;d'asfoasf"))
             ;; TODO: Type (invalid json)
@@ -157,7 +157,7 @@ only tests the additional conditions imposed by the
 
     ;; Try decoding a full request
     (should (equal
-             (jrpc--decode-request-json "{\"jsonrpc\": \"2.0\",\"method\": \"message\",\"params\": [\"This is a %s\", \"test message\"],\"id\": 12456,}")
+             (json-rpc-server--decode-request-json "{\"jsonrpc\": \"2.0\",\"method\": \"message\",\"params\": [\"This is a %s\", \"test message\"],\"id\": 12456,}")
              '(("jsonrpc" . "2.0")
                ("method" . "message")
                ("params" . ("This is a %s"
@@ -165,50 +165,52 @@ only tests the additional conditions imposed by the
                ("id" . 12456))))
     )
 
-  (ert-deftest test-jrpc--execute-request ()
-    "Test for `jrpc--execute-request'.
+  (ert-deftest test-json-rpc-server--execute-request ()
+    "Test for `json-rpc-server--execute-request'.
 
 Note that this while this test does test a full function
 execution, it does not do so thoroughly. That is done in the unit
-test for the underlying function, `jrpc--call-function'.
+test for the underlying function,
+`json-rpc-server--call-function'.
 
 This test is primarily designed to check that the function is
-correctly parsed and sent into `jrpc--call-function'."
-    (defun jrpc--call-function-patch (func args)
-      "Patched `jrpc--call-function' that just checks the types of the arguments."
+correctly parsed and sent into `json-rpc-server--call-function'."
+    (defun json-rpc-server--call-function-patch (func args)
+      "Patched `json-rpc-server--call-function' that just checks
+the types of the arguments."
       (should (symbolp func))
       ;; Note that nil counts as a list.
       (should (listp args)))
 
-    ;; Mock `jrpc--call-function' for these methods
-    (cl-letf (((symbol-function 'jrpc--call-function)
-               'jrpc--call-function-patch))
+    ;; Mock `json-rpc-server--call-function' for these methods
+    (cl-letf (((symbol-function 'json-rpc-server--call-function)
+               'json-rpc-server--call-function-patch))
       ;; Check it executes okay with a simple method call
-      (jrpc--execute-request '(("method" . "message")
+      (json-rpc-server--execute-request '(("method" . "message")
                                ("params" . ("this is a %s message"
                                             "test"))
                                ("id"     . 1))
                              '(message))
       ;; Check it executes okay no arguments
-      (jrpc--execute-request '(("method" . "message")
+      (json-rpc-server--execute-request '(("method" . "message")
                                ("id"     . 1))
                              '(message)))
 
     ;; Ensure it executes correctly.
-    (should (= (jrpc--execute-request '(("method" . "+")
+    (should (= (json-rpc-server--execute-request '(("method" . "+")
                                         ("params" . (1 2 3))
                                         ("id"     . 1))
                                       '(+))
                6)))
 
 
-  (ert-deftest test-jrpc-internal-error-response ()
-    "Test for `jrpc-internal-error-response'.
+  (ert-deftest test-json-rpc-server-internal-error-response ()
+    "Test for `json-rpc-server-internal-error-response'.
 
 Tests the correct JSON is constructed, and the correct errors raised."
     ;; Check a simple message.
     (should (cl-equalp (json-read-from-string
-                        (jrpc-internal-error-response "This is a test"))
+                        (json-rpc-server-internal-error-response "This is a test"))
                        '((jsonrpc . "2.0")
                          (error   . ((code    . -32700)
                                      (message . "This is a test")
@@ -217,7 +219,7 @@ Tests the correct JSON is constructed, and the correct errors raised."
 
     ;; Check a request that holds an id
     (should (cl-equalp (json-read-from-string
-                        (jrpc-internal-error-response
+                        (json-rpc-server-internal-error-response
                          "This is a test"
                          "{\"method\": \"message\",\"id\": 12456,}"
                          ))
@@ -229,11 +231,11 @@ Tests the correct JSON is constructed, and the correct errors raised."
 
     ;; Check wrong message types
     (progn
-      (should-error (jrpc-internal-error-response nil)
+      (should-error (json-rpc-server-internal-error-response nil)
                     :type 'error)
-      (should-error (jrpc-internal-error-response 1)
+      (should-error (json-rpc-server-internal-error-response 1)
                     :type 'error)
-      (should-error (jrpc-internal-error-response '(("an" . "alist")))
+      (should-error (json-rpc-server-internal-error-response '(("an" . "alist")))
                     :type 'error))
 
     ;; Check wrong JSON types
@@ -246,101 +248,101 @@ Tests the correct JSON is constructed, and the correct errors raised."
                (alist-get
                 'id
                 (json-read-from-string
-                 (jrpc-internal-error-response "This is a test" nil)))))
+                 (json-rpc-server-internal-error-response "This is a test" nil)))))
       ;; Wrong JSON structure
       (should (not
                (alist-get
                 'id
                 (json-read-from-string
-                 (jrpc-internal-error-response "This is a test" "12980")))))
+                 (json-rpc-server-internal-error-response "This is a test" "12980")))))
       ;; Non-string JSON
       (should (not
                (alist-get
                 'id
                 (json-read-from-string
-                 (jrpc-internal-error-response "This is a test" 12980))))))
+                 (json-rpc-server-internal-error-response "This is a test" 12980))))))
     )
 
-  (ert-deftest test-jrpc--decode-id ()
-    "Test for `jrpc--decode-id'.
+  (ert-deftest test-json-rpc-server--decode-id ()
+    "Test for `json-rpc-server--decode-id'.
 
 Tests that it decodes the id in minimalistic JSON, and also that
 it does not block with errors when it cannot decode the id."
     ;; It should extract the id even if the overall request is invalid.
-    (should (eq (jrpc--decode-id "{\"id\": 10249}")
+    (should (eq (json-rpc-server--decode-id "{\"id\": 10249}")
                 10249))
     ;; Also check strings
-    (should (equal (jrpc--decode-id "{\"id\": \"10249\"}")
+    (should (equal (json-rpc-server--decode-id "{\"id\": \"10249\"}")
                    "10249"))
 
     ;; These are all invalid JSON, so they should return nil. Nothing should
     ;; raise an error.
     (progn
       ;; Null id
-      (should (eq (jrpc--decode-id "{\"id\": null}")
+      (should (eq (json-rpc-server--decode-id "{\"id\": null}")
                   nil))
       ;; Invalid id type: object (dictionary)
-      (should (eq (jrpc--decode-id "{\"id\": {\"nested\": \"dict\"}}")
+      (should (eq (json-rpc-server--decode-id "{\"id\": {\"nested\": \"dict\"}}")
                   nil)))
     )
 
-  (ert-deftest test-jrpc--replace-symbol-strings ()
-    "Test for `test-jrpc--replace-symbol-strings'.
+  (ert-deftest test-json-rpc-server--replace-symbol-strings ()
+    "Test for `test-json-rpc-server--replace-symbol-strings'.
 
 This test throws hypothetical objects at
-`test-jrpc--replace-symbol-strings' and ensures it replaces the
-symbols correctly."
+`test-json-rpc-server--replace-symbol-strings' and ensures it
+replaces the symbols correctly."
     ;; Symbol variants - cover normal symbols, and keywords.
     (progn
-      (should (eq (jrpc--replace-symbol-strings "'symbol")
+      (should (eq (json-rpc-server--replace-symbol-strings "'symbol")
                   'symbol))
-      (should (eq (jrpc--replace-symbol-strings "'SYMBOL")
+      (should (eq (json-rpc-server--replace-symbol-strings "'SYMBOL")
                   'SYMBOL))
-      (should (eq (jrpc--replace-symbol-strings ":keyword")
+      (should (eq (json-rpc-server--replace-symbol-strings ":keyword")
                   :keyword))
-      (should (eq (jrpc--replace-symbol-strings ":KEYWORD")
+      (should (eq (json-rpc-server--replace-symbol-strings ":KEYWORD")
                   :KEYWORD))
 
       ;; Special case - quoted keywords should just parse like normal symbols
-      (should (eq (jrpc--replace-symbol-strings "':keyword")
+      (should (eq (json-rpc-server--replace-symbol-strings "':keyword")
                   :keyword)))
 
     ;; Straight strings
     (progn
-      (should (equal (jrpc--replace-symbol-strings "a string")
+      (should (equal (json-rpc-server--replace-symbol-strings "a string")
                      "a string"))
-      (should (equal (jrpc--replace-symbol-strings "'double quoted string'")
+      (should (equal (json-rpc-server--replace-symbol-strings "'double quoted string'")
                      "'double quoted string'"))
-      (should (equal (jrpc--replace-symbol-strings ":double key string:")
+      (should (equal (json-rpc-server--replace-symbol-strings ":double key string:")
                      ":double key string:")))
 
     ;; There's no special handling for keywords with apostrophes in.
-    (should (equal (jrpc--replace-symbol-strings ":mixed 'keyword")
+    (should (equal (json-rpc-server--replace-symbol-strings ":mixed 'keyword")
                    :mixed\ \'keyword))
 
     ;; Other types
     (progn
-      (should (eq (jrpc--replace-symbol-strings nil)
+      (should (eq (json-rpc-server--replace-symbol-strings nil)
                   nil))
-      (should (eq (jrpc--replace-symbol-strings 23)
+      (should (eq (json-rpc-server--replace-symbol-strings 23)
                   23)))
 
     ;; Nested types
-    (should (equal (jrpc--replace-symbol-strings '(something))
+    (should (equal (json-rpc-server--replace-symbol-strings '(something))
                    '(something)))
-    (should (equal (jrpc--replace-symbol-strings '(nil))
+    (should (equal (json-rpc-server--replace-symbol-strings '(nil))
                    '(nil)))
-    (should (equal (jrpc--replace-symbol-strings '("string"))
+    (should (equal (json-rpc-server--replace-symbol-strings '("string"))
                    '("string")))
-    (should (equal (jrpc--replace-symbol-strings '("'symbol"))
+    (should (equal (json-rpc-server--replace-symbol-strings '("'symbol"))
                    '(symbol)))
 
     ;; Cons cells
-    (should (equal (jrpc--replace-symbol-strings '("'symbol" . "a string"))
+    (should (equal (json-rpc-server--replace-symbol-strings '("'symbol" . "a string"))
                    '(symbol . "a string")))
 
     ;; Monster nesting test - test this thoroughly
-    (should (equal (jrpc--replace-symbol-strings
+    (should (equal (json-rpc-server--replace-symbol-strings
                     '(
                       ;; Cons cell
                       ("string1" . "'symbol1")
@@ -385,7 +387,7 @@ state. Thus this checks a limited type of functionality."
     ;; Get the response first, then progressively check each part of its
     ;; contents.
     (let ((response (json-read-from-string
-                     (jrpc-handle
+                     (json-rpc-server-handle
                       (json-encode
                        '(("jsonrpc" . "2.0")
                          ("method"  . "+")
@@ -423,19 +425,19 @@ relatively minimal stay changing functionality. Only a variable
 is changed - things like the buffer should be unaffected."
     ;; We have to define a function to change the variable, that takes a string
     ;; name as input, since we can't transfer symbols via JSON.
-    (defun jrpc-custom-setq (var-name new-value)
+    (defun json-rpc-server-custom-setq (var-name new-value)
       (set (intern var-name) new-value))
     (let (
           ;; This is the variable we will try to change
           (test-var 10298)
           )
-      (jrpc-handle
+      (json-rpc-server-handle
        (json-encode
         '(("jsonrpc" . "2.0")
-          ("method"  . "jrpc-custom-setq")
+          ("method"  . "json-rpc-server-custom-setq")
           ("params"  . ["test-var" "this is a test string"])
           ("id"      . 21145)))
-       '(jrpc-custom-setq))
+       '(json-rpc-server-custom-setq))
       (should (string= test-var
                        "this is a test string"))))
 
@@ -449,7 +451,7 @@ This only tests the change in the buffer - other tests are
 responsible for checking the actual response of the API."
     ;; Temporarily expose `insert'
     (with-temp-buffer
-      (jrpc-handle
+      (json-rpc-server-handle
        (json-encode
         '(("jsonrpc" . "2.0")
           ("method"  . "insert")
@@ -477,7 +479,7 @@ this test is sufficient to check that for other error codes."
     ;; Get the response first, then progressively check each part of its
     ;; contents.
     (let* ((response (json-read-from-string
-                      (jrpc-handle
+                      (json-rpc-server-handle
                        (json-encode
                         '(("jsonrpc" . "2.0")
                           ("method"  . "+")
@@ -514,11 +516,11 @@ This test is designed to trick the system up by making it think
 it is calling a valid function, causing an unexpected error when
 the function is invoked."
     (let* ((response (json-read-from-string
-                      (jrpc-handle
+                      (json-rpc-server-handle
                        (json-encode
-                        '(("method"  . "jrpc-function-that-does-not-exist")
+                        '(("method"  . "json-rpc-server-function-that-does-not-exist")
                           ("id"      . 1)))
-                       '(jrpc-function-that-does-not-exist))))
+                       '(json-rpc-server-function-that-does-not-exist))))
            (response-error (alist-get 'error response)))
       (should response)
       ;; We only check the response code
@@ -532,7 +534,7 @@ the function is invoked."
     (let* ((response (json-read-from-string
                       ;; The exposed functions don't matter here. Just pass an
                       ;; empty list.
-                      (jrpc-handle "{}" '())))
+                      (json-rpc-server-handle "{}" '())))
            (response-error (alist-get 'error response)))
       (should response)
       (should (eq (alist-get 'code response-error)
@@ -546,18 +548,18 @@ the function is invoked."
 Symbols have to be passed by abusing the JSON syntax. Test a full
 procedure call works using this paradigm."
     ;; Temporarily expose `insert'
-    (cl-defun jrpc--symbols-test-function (arg1 &key keyword)
+    (cl-defun json-rpc-server--symbols-test-function (arg1 &key keyword)
       ;; Keyword should be passed as a keyword, arg2 should end up a symbol.
       (should (equal arg1 "string"))
       (should (eq keyword 'symbol))
       t)
-    (should (jrpc-handle
+    (should (json-rpc-server-handle
              (json-encode
               '(("jsonrpc" . "2.0")
-                ("method"  . "jrpc--symbols-test-function")
+                ("method"  . "json-rpc-server--symbols-test-function")
                 ("params"  . ["string" ":keyword" "'symbol"])
                 ("id"      . 201398)))
-             '(jrpc--symbols-test-function)))
+             '(json-rpc-server--symbols-test-function)))
     )
 
   (ert-deftest test-full-procedure-call--quoted-method ()
@@ -567,7 +569,7 @@ Given the way symbols are encoded, the user may get confused.
 They might pass the function name quoted, rather than as a
 straight string. This should be tolerated."
     (let ((response (json-read-from-string
-                     (jrpc-handle
+                     (json-rpc-server-handle
                       (json-encode
                        '(("jsonrpc" . "2.0")
                          ("method"  . "'+")

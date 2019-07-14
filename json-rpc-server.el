@@ -49,8 +49,9 @@
 ;;   "id": "3140983184"
 ;; }
 
-;; Pass this as a string to `jrpc-handle' - the specified text will be inserted
-;; and the return value of the call to `insert' will be encoded into a response.
+;; Pass this as a string to `json-rpc-server-handle' - the specified text will
+;; be inserted and the return value of the call to `insert' will be encoded into
+;; a response.
 
 ;; Symbols and keywords can be passed by abusing the JSON-RPC syntax as follows:
 
@@ -79,7 +80,7 @@
 
 (defgroup json-rpc-server nil
   "Group relating to json-rpc-server.el"
-  :prefix "jrpc-"
+  :prefix "json-rpc-server-"
   :link `(url-link :tag "Send Bug Report"
                    "https://github.com/jcaw/json-rpc-server.el/issues")
   :link '(url-link :tag "Other Emacs packages by Jcaw"
@@ -89,34 +90,33 @@
   :group 'tools)
 
 
-(defvar jrpc--error-codes
-  '((jrpc-invalid-request-json . -32700)
-    (jrpc-invalid-request      . -32600)
-    (jrpc-invalid-function     . -32601)
-    (jrpc-invalid-params       . -32602)
-    (jrpc-error-calling-method . -32603))
+(defvar json-rpc-server--error-codes
+  '((json-rpc-server-invalid-request-json . -32700)
+    (json-rpc-server-invalid-request      . -32600)
+    (json-rpc-server-invalid-function     . -32601)
+    (json-rpc-server-invalid-params       . -32602)
+    (json-rpc-server-error-calling-method . -32603))
   "Alist mapping procedural errors to their JSON-RPC 2.0 error codes.")
 
 
-(defvar jrpc--unknown-error-code  -32603
+(defvar json-rpc-server--unknown-error-code  -32603
   "Error code to be used for unknown errors.")
 
 
-(defun jrpc--get-error-code (error-symbol)
+(defun json-rpc-server--get-error-code (error-symbol)
   "Get the JSON-RPC 2.0 specification error code for an error.
 
-`ERROR-SYMBOL' should be a symbol representing the error. It
-should a subclass of `jrpc-procedural-error'."
+`ERROR-SYMBOL' should be a symbol representing the error."
   (interactive)
-  (or (alist-get error-symbol jrpc--error-codes)
-      jrpc--unknown-error-code))
+  (or (alist-get error-symbol json-rpc-server--error-codes)
+      json-rpc-server--unknown-error-code))
 
 
-(defun jrpc--construct-error-response (error-code
+(defun json-rpc-server--construct-error-response (error-code
                                     message
                                     &optional
                                     underlying-error)
-  "Encode a `jrpc-procedural-error' into a JSON-RPC 2.0 error response.
+  "Encode a JSON-RPC 2.0 error response.
 
 The result will be a JSON-RPC 2.0 response string, containing
 information about the error. For example:
@@ -153,7 +153,7 @@ Arguments:
              `((underlying-error . ((type . ,(car underlying-error))
                                     ;; The data should be a list, since it's a
                                     ;; `cdr'. Encode as much of it as we can.
-                                    (data . ,(mapcar 'jrpc--replace-unencodable-object
+                                    (data . ,(mapcar 'json-rpc-server--replace-unencodable-object
                                                      (cdr underlying-error)))))))))
     ;; The id will be added later.
     `(("jsonrpc" . "2.0")
@@ -162,72 +162,72 @@ Arguments:
                   (data . ,additional-data))))))
 
 
-(cl-defun jrpc--throw-error-response (error-code message &key (original-error nil))
-  "Throw a `jrpc-respond' signal, with an encoded error response attached.
+(cl-defun json-rpc-server--throw-error-response (error-code message &key (original-error nil))
+  "Throw a `json-rpc-server-respond' signal with an error response attached.
 
 `MESSAGE' - the error message to attach.
 
 `:ORIGINAL-ERROR' - Optional. The original error that was thrown.
   Information about this error will be sent back in the
   response."
-  (throw 'jrpc-respond
-         (jrpc--construct-error-response error-code message original-error)))
+  (throw 'json-rpc-server-respond
+         (json-rpc-server--construct-error-response error-code message original-error)))
 
 
-(cl-defun jrpc--throw-invalid-json (message &key (original-error nil))
-  "Throw a `jrpc-response' with a \"malformed JSON\" error code.
+(cl-defun json-rpc-server--throw-invalid-json (message &key (original-error nil))
+  "Throw a `json-rpc-server-response' with a \"malformed JSON\" error code.
 
 `MESSAGE' - the error message to attach.
 
 `:ORIGINAL-ERROR' - Optional. The original error that was thrown.
   Information about this error will be sent back in the
   response."
-  (jrpc--throw-error-response
-   (jrpc--get-error-code 'jrpc-invalid-request-json)
+  (json-rpc-server--throw-error-response
+   (json-rpc-server--get-error-code 'json-rpc-server-invalid-request-json)
    message
    :original-error original-error))
 
 
-(defun jrpc--throw-invalid-request (message)
-  "Throw a `jrpc-response' with an \"invalid request\" error code.
+(defun json-rpc-server--throw-invalid-request (message)
+  "Throw a `json-rpc-server-response' with an \"invalid request\" error code.
 
 `MESSAGE' is the error message to attach."
-  (jrpc--throw-error-response
-   (jrpc--get-error-code 'jrpc-invalid-request)
+  (json-rpc-server--throw-error-response
+   (json-rpc-server--get-error-code 'json-rpc-server-invalid-request)
    message))
 
 
-(defun jrpc--throw-invalid-function (message)
-  "Throw a `jrpc-response' with an \"invalid function\" error code.
+(defun json-rpc-server--throw-invalid-function (message)
+  "Throw a `json-rpc-server-response' with an \"invalid function\" error code.
 
 `MESSAGE' is the error message to attach."
-  (jrpc--throw-error-response
-   (jrpc--get-error-code 'jrpc-invalid-function)
+  (json-rpc-server--throw-error-response
+   (json-rpc-server--get-error-code 'json-rpc-server-invalid-function)
    message))
 
 
-(cl-defun jrpc--throw-error-calling-method (message &key original-error)
-  "Throw a `jrpc-response' with an \"internal error\" error code.
+(cl-defun json-rpc-server--throw-error-calling-method (message &key original-error)
+  "Throw a `json-rpc-server-response' with an \"internal error\" error code.
 
 `MESSAGE' is the error message to attach.
 
 `:ORIGINAL-ERROR' - The original error that was thrown.
   Information about this error will be sent back in the
   response."
-  (jrpc--throw-error-response
-   (jrpc--get-error-code 'jrpc-error-calling-method)
+  (json-rpc-server--throw-error-response
+   (json-rpc-server--get-error-code 'json-rpc-server-error-calling-method)
    message
    :original-error original-error))
 
 
-(defun jrpc--throw-result (result)
-  "Throw a `jrpc-response' with a successful result attached.
+(defun json-rpc-server--throw-result (result)
+  "Throw a `json-rpc-server-response' with a successful result attached.
 
 `RESULT' should be the raw result of the method execution."
-  (throw 'jrpc-respond (jrpc--construct-result-response result)))
+  (throw 'json-rpc-server-respond (json-rpc-server--construct-result-response result)))
 
 
-(defun jrpc--construct-result-response (result)
+(defun json-rpc-server--construct-result-response (result)
   "Create a JSON-RPC 2.0 response with a successful result.
 
 `RESULT' should be the raw result data returned by the procedure
@@ -252,7 +252,7 @@ should be added before this response is returned to a client."
 ;; --------------------------------------------------------------------------
 
 
-(defun jrpc-null-p (value)
+(defun json-rpc-server-null-p (value)
   "Is `VALUE' either nil, or json-null?
 
 Other falsey values, such as 0, do not count. Note that the empty
@@ -261,7 +261,7 @@ list is equivalent to nil, so the empty list counts as nil."
       (eq value json-null)))
 
 
-(defun jrpc-alist-get (key alist)
+(defun json-rpc-server-alist-get (key alist)
   "Like `alist-get', but works with string keys.
 
 `KEY' is the key to query.
@@ -272,38 +272,38 @@ list is equivalent to nil, so the empty list counts as nil."
          (cdr pair))))
 
 
-(defun jrpc--call-function-internal (func args)
+(defun json-rpc-server--call-function-internal (func args)
   "Apply `FUNC' to `ARGS'.
 
-This wrapper is abstracted from `jrpc--call-function' to make it
-easier for developers to debug function calls themselves, without
-worrying about broader behavior."
+This wrapper is abstracted from `json-rpc-server--call-function'
+to make it easier for developers to debug function calls
+themselves, without worrying about broader behavior."
   (apply func args))
 
 
-(defun jrpc--call-function (func args)
+(defun json-rpc-server--call-function (func args)
   "Execute the remote procedure call for `FUNC' with `ARGS'."
   ;; TODO: Allow macro calls here too?
   (condition-case err
-      (jrpc--call-function-internal func args)
+      (json-rpc-server--call-function-internal func args)
     (error
-     (jrpc--throw-error-calling-method
+     (json-rpc-server--throw-error-calling-method
       "There was an error calling the method."
       :original-error err))))
 
 
-(defun jrpc--execute-request (request exposed-functions)
+(defun json-rpc-server--execute-request (request exposed-functions)
   "Execute a remote procedure call.
 
 `REQUEST' should be an alist representing a JSON-RPC 2.0 request.
 
 `EXPOSED-FUNCTIONS' should be a list of function symbols that are
 allowed to be executed. The method will not be executed unless
-it's in this list. See `jrpc-handle' for more details.
+it's in this list. See `json-rpc-server-handle' for more details.
 
 An error will be raised if the function in the request does not
 exist (or has not been exposed.)"
-  (let* ((method-name (jrpc-alist-get "method" request))
+  (let* ((method-name (json-rpc-server-alist-get "method" request))
          ;; Because we can only transport strings via JSON, the method name has
          ;; to be encoded as a string. That means we have to manually convert it
          ;; into a symbol before invocation.
@@ -317,27 +317,27 @@ exist (or has not been exposed.)"
             (condition-case nil
                 (intern method-name)
               (error
-               (jrpc--throw-invalid-request
+               (json-rpc-server--throw-invalid-request
                 (concat
                  "`method` could not be converted to an Elisp symbol. It "
                  "should be a string that converts into an elisp symbol."))))))
-         (args (jrpc-alist-get "params" request)))
+         (args (json-rpc-server-alist-get "params" request)))
     ;; We now check that the function is legal, and callable, before trying to
     ;; call it.
     (unless (member method-symbol exposed-functions)
-      (jrpc--throw-invalid-function
+      (json-rpc-server--throw-invalid-function
        (concat
         "Function has not been exposed (it may or may not exist). Cannot "
         "execute.")))
     (unless (functionp method-symbol)
-      (jrpc--throw-invalid-function
+      (json-rpc-server--throw-invalid-function
        "This symbol has been exposed, but it is not a function. Cannot call it."))
     ;; TODO: Check if function is callable with args. Can the function signature
     ;;   be checked in Elisp?
-    (jrpc--call-function method-symbol args)))
+    (json-rpc-server--call-function method-symbol args)))
 
 
-(defun jrpc--validate-request (request-alist)
+(defun json-rpc-server--validate-request (request-alist)
   "Validate that a decoded request has the correct structure.
 
 The request should be provided in the form of an alist, in
@@ -345,17 +345,17 @@ The request should be provided in the form of an alist, in
 
 If the request is invalid, an error response signal will be
 thrown. Ensure these signals are caught."
-  (when (jrpc-null-p request-alist)
-    (jrpc--throw-invalid-request "No request provided"))
+  (when (json-rpc-server-null-p request-alist)
+    (json-rpc-server--throw-invalid-request "No request provided"))
   (unless (json-alist-p request-alist)
-    (jrpc--throw-invalid-request "The request was not a JSON \"object\""))
-  (let* ((jsonrpc       (jrpc-alist-get "jsonrpc" request-alist))
-         (method        (jrpc-alist-get "method"  request-alist))
-         (params        (jrpc-alist-get "params"  request-alist))
-         (id            (jrpc-alist-get "id"      request-alist))
+    (json-rpc-server--throw-invalid-request "The request was not a JSON \"object\""))
+  (let* ((jsonrpc       (json-rpc-server-alist-get "jsonrpc" request-alist))
+         (method        (json-rpc-server-alist-get "method"  request-alist))
+         (params        (json-rpc-server-alist-get "params"  request-alist))
+         (id            (json-rpc-server-alist-get "id"      request-alist))
          ;; If there's no `jsonrpc' parameter, we assume this is probably a
          ;; jsonrpc 1.0 request.
-         (appears-to-be-jsonrpc-v1 (jrpc-null-p jsonrpc))
+         (appears-to-be-jsonrpc-v1 (json-rpc-server-null-p jsonrpc))
          ;; It's jsonrpc 2.0 iff the jsonrpc string is "2.0" *exactly*.
          (is-jsonrpc-v2.0 (and (stringp jsonrpc)
                                (string= jsonrpc "2.0"))))
@@ -363,39 +363,39 @@ thrown. Ensure these signals are caught."
     ;; supported.
     (unless (or is-jsonrpc-v2.0
                 appears-to-be-jsonrpc-v1)
-      (jrpc--throw-invalid-request
+      (json-rpc-server--throw-invalid-request
        (concat "Only jsonrpc versions 1 to 2.0 are supported. jsonrpc 2.0 is "
                "preferred. If the `jsonrpc` parameter is included, it must be "
                "\"2.0\" exactly.")))
     (unless method
-      (jrpc--throw-invalid-request "`method` was not provided."))
+      (json-rpc-server--throw-invalid-request "`method` was not provided."))
     ;; TODO: Perhaps ensure the function is not a `json-rpc-server' function?
-    ;; E.g. disallow the `jrpc-' prefix? Perhaps not. Unlikely to be reliable.
+    ;; E.g. disallow the `json-rpc-server-' prefix? Perhaps not. Unlikely to be reliable.
     ;; User should simply never expose those functions.
     (unless (or (stringp method)
                 ;; Sometimes users may get confused and send a symbol as the
                 ;; method name. That's fine. Tolerate this behavior.
                 (symbolp method))
-      (jrpc--throw-invalid-request "`method` should be a string."))
+      (json-rpc-server--throw-invalid-request "`method` should be a string."))
     ;; `params' should be a list of arguments, but it is optional. We have to
     ;; allow a nil value.
-    (unless (or (jrpc-null-p params)
+    (unless (or (json-rpc-server-null-p params)
                 (listp params))
       ;; TODO: Should this be a JSON-RPC "invalid params" error?
-      (jrpc--throw-invalid-request
+      (json-rpc-server--throw-invalid-request
        (concat "`params` was provided, but it was not an array. Could "
                "not decode the parameters into a list.")))
     (unless id
-      (jrpc--throw-invalid-request "`id` not provided"))
+      (json-rpc-server--throw-invalid-request "`id` not provided"))
     ;; "id" can be a string or a number. Floats are allowed, which seems odd
     ;; given the potential for rounding errors.
     (unless (or (numberp id)
                 (stringp id))
-      (jrpc--throw-invalid-request "`id` should be an integer."))
+      (json-rpc-server--throw-invalid-request "`id` should be an integer."))
     request-alist))
 
 
-(defun jrpc--decode-request-json (json)
+(defun json-rpc-server--decode-request-json (json)
   "Decode JSON with custom rules and error handling.
 
 Arrays will be decoded into lists, objects (dictionaries) will be
@@ -406,7 +406,7 @@ indicating that the request had invalid json. Ensure this
 response is caught."
   ;; Decode symbol-like strings into symbols. Do this as part of the JSON
   ;; parsing process.
-  (jrpc--replace-symbol-strings
+  (json-rpc-server--replace-symbol-strings
    ;; Set some custom options for the JSON decoder.
    (let (
          ;; Arrays should be decoded as lists, because this is the array-like
@@ -426,14 +426,14 @@ response is caught."
      (condition-case err
          (json-read-from-string json)
        (error
-        ;; Catch JSON errors and raise a jrpc error that can be more easily
+        ;; Catch JSON errors and raise a json-rpc-server error that can be more easily
         ;; understood.
-        (jrpc--throw-invalid-json
+        (json-rpc-server--throw-invalid-json
          "There was an error decoding the request's JSON."
          :original-error err))))))
 
 
-(defun jrpc--replace-symbol-strings (object)
+(defun json-rpc-server--replace-symbol-strings (object)
   "Replace symbol-like strings with symbols.
 
 `OBJECT' is the decoded JSON object you want to modify. It should
@@ -476,12 +476,12 @@ This is a recursive function. It will call itself. Ensure
                ;; It wasn't a symbol. Return the original string.
                (t object)))
         ((consp object)
-         (cons (jrpc--replace-symbol-strings (car object))
-               (jrpc--replace-symbol-strings (cdr object))))
+         (cons (json-rpc-server--replace-symbol-strings (car object))
+               (json-rpc-server--replace-symbol-strings (cdr object))))
         (t object)))
 
 
-(defun jrpc--replace-unencodable-object (object)
+(defun json-rpc-server--replace-unencodable-object (object)
   "Replace `OBJECT' if it can't be encoded into JSON.
 
 This function is designed to sanitise complex objects before they
@@ -523,7 +523,7 @@ Usage example:
       (type-of object)))))
 
 
-(defun jrpc--extract-id (decoded-request)
+(defun json-rpc-server--extract-id (decoded-request)
   "Attempt to extract a valid ID from a request alist and NOTHING ELSE.
 
 If no valid ID could be extracted, returns nil. Valid IDs are
@@ -534,13 +534,13 @@ This method will not raise errors.
 `DECODED-REQUEST' should be a JSON-RPC request (up to 2.0),
 decoded from JSON into an alist form."
   (ignore-errors
-    (let ((id (jrpc-alist-get "id" decoded-request)))
+    (let ((id (json-rpc-server-alist-get "id" decoded-request)))
       (when (or (stringp id)
                 (integerp id))
         id))))
 
 
-(defun jrpc--decode-id (request-in-json)
+(defun json-rpc-server--decode-id (request-in-json)
   "Attempt to decode a valid id from a JSON request and NOTHING ELSE.
 
 If no valid id could be decoded, returns nil.
@@ -550,10 +550,10 @@ This method will not raise errors.
 `REQUEST-IN-JSON' should be a JSON-RPC request (up to 2.0) in
 JSON form."
   (ignore-errors
-    (jrpc--extract-id (jrpc--decode-request-json request-in-json))))
+    (json-rpc-server--extract-id (json-rpc-server--decode-request-json request-in-json))))
 
 
-(defun jrpc-unknown-error-response (&optional request-in-json)
+(defun json-rpc-server-unknown-error-response (&optional request-in-json)
   "Construct a JSON response indicating an unknown error.
 
 This is a utility method for the transport layer to use when it
@@ -563,11 +563,11 @@ If possible, please supply this method with the original JSON-RPC
 request, as a JSON string, in `REQUEST-IN-JSON'. It will be used
 by this method to extract as much information as possible for the
 response."
-  (jrpc-internal-error-response "An unknown error occurred"
+  (json-rpc-server-internal-error-response "An unknown error occurred"
                                 request-in-json))
 
 
-(defun jrpc-internal-error-response (message &optional request-in-json)
+(defun json-rpc-server-internal-error-response (message &optional request-in-json)
   "Construct a JSON response indicating internal error `MESSAGE'.
 
 This is a utility method for the transport layer to use to
@@ -587,7 +587,7 @@ response."
   ;; string).
   (unless (stringp message)
     (error "%s" "`message' must be a string"))
-  (let ((id (or (jrpc--decode-id request-in-json)
+  (let ((id (or (json-rpc-server--decode-id request-in-json)
                 "null")))
     (format
      "
@@ -606,7 +606,7 @@ response."
      id)))
 
 
-(defun jrpc--ammend-id (id response)
+(defun json-rpc-server--ammend-id (id response)
   "Add an \"id\" to a JSON-RPC response.
 
 `ID' should be the id. `RESPONSE' should be the raw response,
@@ -614,7 +614,7 @@ before it's encoded into a string."
   (append response `((id . ,id))))
 
 
-(defun jrpc--handle-single (decoded-request exposed-functions)
+(defun json-rpc-server--handle-single (decoded-request exposed-functions)
   "Handle a single JSON-RPC request.
 
 `DECODED-REQUEST' should be a JSON-RPC (up to 2.0) request,
@@ -622,7 +622,7 @@ decoded into an alist.
 
 `EXPOSED-FUNCTIONS' should be a list of function symbols that are
 allowed to be executed. The method will not be executed unless
-it's in this list. See `jrpc-handle' for more details.
+it's in this list. See `json-rpc-server-handle' for more details.
 
 Returns the JSON-RPC response, encoded in JSON."
     (let (
@@ -632,17 +632,17 @@ Returns the JSON-RPC response, encoded in JSON."
           ;;
           ;; This may still fail - that's OK. We just want to maximize the chance
           ;; of extracting it.
-          (id (jrpc--extract-id decoded-request)))
-      (jrpc--ammend-id
+          (id (json-rpc-server--extract-id decoded-request)))
+      (json-rpc-server--ammend-id
        id
-       (catch 'jrpc-respond
-         (jrpc--construct-result-response
-          (jrpc--execute-request
-           (jrpc--validate-request decoded-request)
+       (catch 'json-rpc-server-respond
+         (json-rpc-server--construct-result-response
+          (json-rpc-server--execute-request
+           (json-rpc-server--validate-request decoded-request)
            exposed-functions))))))
 
 
-(defun jrpc-handle (request-in-json exposed-functions)
+(defun json-rpc-server-handle (request-in-json exposed-functions)
   "Handle a JSON-RPC request.
 
 Parameters
@@ -685,11 +685,11 @@ JSON-RPC 2.0 specification:
      requests will always be processed in the order they are
      supplied. Responses will be supplied in the same order."
   (json-encode
-   (catch 'jrpc-respond
+   (catch 'json-rpc-server-respond
     ;; Per JSON-RPC 2.0 specification, requests can either be single requests or
     ;; a list of requests. Each type has to be handled differently, so we decode
     ;; it up-front.
-    (let* ((decoded-request (jrpc--decode-request-json request-in-json))
+    (let* ((decoded-request (json-rpc-server--decode-request-json request-in-json))
            ;; Because JSON objects (i.e. dictionaries) will be decoded into
            ;; alists, we can't just assume lists are batch requests. Single
            ;; requests will also look like lists. Instead, ensure the request is
@@ -698,16 +698,16 @@ JSON-RPC 2.0 specification:
                               ;; If the request is an empty list (or null), we
                               ;; can't iterate over it. We have to process it
                               ;; as a single request.
-                              (not (jrpc-null-p decoded-request))
+                              (not (json-rpc-server-null-p decoded-request))
                               (listp decoded-request)
                               (not (json-alist-p decoded-request)))))
       (if is-batch-request
           ;; Process each request in turn; Return all the results, in a list.
           (mapcar (lambda (request)
                     "Handle a single request from the batch"
-                    (jrpc--handle-single request exposed-functions))
+                    (json-rpc-server--handle-single request exposed-functions))
                   decoded-request)
-        (jrpc--handle-single decoded-request exposed-functions))))))
+        (json-rpc-server--handle-single decoded-request exposed-functions))))))
 
 
 (provide 'json-rpc-server)
