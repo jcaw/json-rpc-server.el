@@ -113,9 +113,9 @@
 
 
 (defun json-rpc-server--construct-error-response (error-code
-                                    message
-                                    &optional
-                                    underlying-error)
+                                                  message
+                                                  &optional
+                                                  underlying-error)
   "Encode a JSON-RPC 2.0 error response.
 
 The result will be a JSON-RPC 2.0 response string, containing
@@ -625,21 +625,21 @@ allowed to be executed. The method will not be executed unless
 it's in this list. See `json-rpc-server-handle' for more details.
 
 Returns the JSON-RPC response, encoded in JSON."
-    (let (
-          ;; We attempt to decode the id using a robust method, to give us the
-          ;; maximum chance of being able to include it in the response if there is
-          ;; an error.
-          ;;
-          ;; This may still fail - that's OK. We just want to maximize the chance
-          ;; of extracting it.
-          (id (json-rpc-server--extract-id decoded-request)))
-      (json-rpc-server--ammend-id
-       id
-       (catch 'json-rpc-server-respond
-         (json-rpc-server--construct-result-response
-          (json-rpc-server--execute-request
-           (json-rpc-server--validate-request decoded-request)
-           exposed-functions))))))
+  (let (
+        ;; We attempt to decode the id using a robust method, to give us the
+        ;; maximum chance of being able to include it in the response if there is
+        ;; an error.
+        ;;
+        ;; This may still fail - that's OK. We just want to maximize the chance
+        ;; of extracting it.
+        (id (json-rpc-server--extract-id decoded-request)))
+    (json-rpc-server--ammend-id
+     id
+     (catch 'json-rpc-server-respond
+       (json-rpc-server--construct-result-response
+        (json-rpc-server--execute-request
+         (json-rpc-server--validate-request decoded-request)
+         exposed-functions))))))
 
 
 (defun json-rpc-server-handle (request-in-json exposed-functions)
@@ -686,28 +686,28 @@ JSON-RPC 2.0 specification:
      supplied. Responses will be supplied in the same order."
   (json-encode
    (catch 'json-rpc-server-respond
-    ;; Per JSON-RPC 2.0 specification, requests can either be single requests or
-    ;; a list of requests. Each type has to be handled differently, so we decode
-    ;; it up-front.
-    (let* ((decoded-request (json-rpc-server--decode-request-json request-in-json))
-           ;; Because JSON objects (i.e. dictionaries) will be decoded into
-           ;; alists, we can't just assume lists are batch requests. Single
-           ;; requests will also look like lists. Instead, ensure the request is
-           ;; a list *and* not a dictionary.
-           (is-batch-request (and
-                              ;; If the request is an empty list (or null), we
-                              ;; can't iterate over it. We have to process it
-                              ;; as a single request.
-                              (not (json-rpc-server-null-p decoded-request))
-                              (listp decoded-request)
-                              (not (json-alist-p decoded-request)))))
-      (if is-batch-request
-          ;; Process each request in turn; Return all the results, in a list.
-          (mapcar (lambda (request)
-                    "Handle a single request from the batch"
-                    (json-rpc-server--handle-single request exposed-functions))
-                  decoded-request)
-        (json-rpc-server--handle-single decoded-request exposed-functions))))))
+     ;; Per JSON-RPC 2.0 specification, requests can either be single requests or
+     ;; a list of requests. Each type has to be handled differently, so we decode
+     ;; it up-front.
+     (let* ((decoded-request (json-rpc-server--decode-request-json request-in-json))
+            ;; Because JSON objects (i.e. dictionaries) will be decoded into
+            ;; alists, we can't just assume lists are batch requests. Single
+            ;; requests will also look like lists. Instead, ensure the request is
+            ;; a list *and* not a dictionary.
+            (is-batch-request (and
+                               ;; If the request is an empty list (or null), we
+                               ;; can't iterate over it. We have to process it
+                               ;; as a single request.
+                               (not (json-rpc-server-null-p decoded-request))
+                               (listp decoded-request)
+                               (not (json-alist-p decoded-request)))))
+       (if is-batch-request
+           ;; Process each request in turn; Return all the results, in a list.
+           (mapcar (lambda (request)
+                     "Handle a single request from the batch"
+                     (json-rpc-server--handle-single request exposed-functions))
+                   decoded-request)
+         (json-rpc-server--handle-single decoded-request exposed-functions))))))
 
 
 (provide 'json-rpc-server)
