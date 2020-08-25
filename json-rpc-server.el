@@ -321,6 +321,7 @@ should be added before this response is returned to a client."
 
 Other falsey values, such as 0, do not count. Note that the empty
 list is equivalent to nil, so the empty list counts as nil."
+  ;; TODO: Only allow `nil' here, for parity with `json-serialize'?
   (or (eq value nil)
       (eq value json-null)))
 
