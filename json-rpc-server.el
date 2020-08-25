@@ -103,6 +103,70 @@
   "Error code to be used for unknown errors.")
 
 
+(defun json-rpc-server--convert-for-json (data)
+  "Recursively convert `DATA' to make it compatible with `json-serialize'.
+
+Alists are converted into hash tables, and regular lists
+converted into vectors. The objective is to make the output of
+`json-serialize' match that of `json-encode'."
+  (cond ((stringp data) data)
+        ((listp data)
+         (if (json-alist-p data)
+             (let ((data-as-table (make-hash-table :size (length data))))
+               (mapc (lambda (pair)
+                       (puthash (if (symbolp (car  pair))
+                                    (symbol-name (car pair))
+                                  (car pair))
+                                (json-rpc-server--convert-for-json (cdr pair))
+                                data-as-table))
+                     data)
+               data-as-table)
+           (vconcat (mapcar 'json-rpc-server--convert-for-json data))))
+        ((hash-table-p data)
+         (maphash (lambda (key value)
+                    (let ((new-key (if (symbolp key)
+                                       (progn
+                                         (remhash key data)
+                                         (symbol-name key))
+                                     key)))
+                      (puthash new-key
+                               (json-rpc-server--convert-for-json value)
+                               data)))
+                  data)
+         data)
+        ((symbolp data) (symbol-name data))
+        (t data)))
+
+
+(defconst json-rpc-server--use-native-serialize
+  (and (fboundp 'json-serialize)
+       (>= emacs-major-version 27))
+  "Use Emacs 27+'s native C JSON serialization?")
+
+
+(defun json-rpc-server--emulate-legacy-encode (data)
+  "Emulate the behaviour of `json-encode', using fast encoding when possible.
+
+Emacs 27 introduces native C serialization for JSON, but it
+doesn't behave the same way as `json-encode'. It's stricter in
+the datatypes it requires.
+
+To get around this, we can convert the native elisp objects
+before encoding, so the output matches that of `json-encode' but
+the encoding process is a lot faster (~50x faster, even with the
+overhead of conversion)."
+  (if (and json-rpc-server--use-native-serialize
+           ;; New `json-serialize' doesn't seem to work with basic types.
+           (not (member data '(nil t)))
+           (not (stringp data))
+           (not (numberp data))
+           (not (symbolp data)))
+      (json-serialize (json-rpc-server--convert-for-json data)
+                      :null-object nil
+                      :false-object :json-false)
+    (json-encode data)))
+
+
 (defun json-rpc-server--get-error-code (error-symbol)
   "Get the JSON-RPC 2.0 specification error code for an error.
 
@@ -424,6 +488,10 @@ response is caught."
          (json-key-type 'string)
          )
      (condition-case err
+         ;; Reading JSON with the legacy system is much faster than writing it,
+         ;; so we're still using it for now.
+         ;;
+         ;; TODO: Switch JSON reading to Emacs 27 primitives
          (json-read-from-string json)
        (error
         ;; Catch JSON errors and raise a json-rpc-server error that can be more easily
@@ -514,7 +582,7 @@ Usage example:
   ;;   make this function recursive to do that.
   (condition-case nil
       (progn
-        (json-encode object)
+        (json-rpc-server--emulate-legacy-encode object)
         object)
     (error
      (format
@@ -602,7 +670,7 @@ response."
 }"
      ;; We encode the message explicitly to prevent something being injected
      ;; into the JSON.
-     (json-encode message)
+     (json-rpc-server--emulate-legacy-encode message)
      id)))
 
 
@@ -684,7 +752,7 @@ JSON-RPC 2.0 specification:
   2. Batch requests are not processed concurrently. Batch
      requests will always be processed in the order they are
      supplied. Responses will be supplied in the same order."
-  (json-encode
+  (json-rpc-server--emulate-legacy-encode
    (catch 'json-rpc-server-respond
      ;; Per JSON-RPC 2.0 specification, requests can either be single requests or
      ;; a list of requests. Each type has to be handled differently, so we decode
