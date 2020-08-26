@@ -134,6 +134,8 @@ converted into vectors. The objective is to make the output of
                                data)))
                   data)
          data)
+        ;; Don't want to convert these to a string.
+        ((member data `(t nil :json-false)) data)
         ((symbolp data) (symbol-name data))
         (t data)))
 
