@@ -99,7 +99,7 @@ Here's an example request:
     "jsonrpc": "2.0",
     "method": "+",
     "params": [1, 2, 3],
-    "id": 29492,
+    "id": 29492
 }
 ```
 
