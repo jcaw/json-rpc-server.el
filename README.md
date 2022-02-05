@@ -441,8 +441,7 @@ Don't use it. You'd have to wait between each scroll press.)
 
 ## Installation
 
-The package itself is named `json-rpc-server`. The intention is to publish this
-on MELPA - hold out until they've accepted it. Once that happens:
+The package itself is named `json-rpc-server`. It's easiest to install from MELPA. Make sure it's in your list of repositories, then:
 
 ```text
 M-x package-install RET json-rpc-server RET
